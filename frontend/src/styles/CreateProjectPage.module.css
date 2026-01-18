@@ -1,0 +1,58 @@
+/* CreateProjectPage.module.css */
+.create-project-root {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(120deg, #232526 0%, #0f2027 100%);
+  font-family: Inter, Segoe UI, Arial, sans-serif;
+}
+.create-project-card {
+  background: rgba(30,34,44,0.98);
+  border-radius: 18px;
+  box-shadow: 0 6px 32px #0006;
+  padding: 40px 36px 32px 36px;
+  min-width: 340px;
+  max-width: 500px;
+  border: 1.5px solid #222;
+  color: #fff;
+}
+.create-project-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 18px;
+  text-align: center;
+}
+.create-project-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.create-project-input {
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1.5px solid #222;
+  background: #232526;
+  color: #fff;
+  font-size: 16px;
+}
+.create-project-btn {
+  padding: 12px 0;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #0072ff 0%, #00c6ff 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background 0.18s;
+}
+.create-project-btn:active {
+  background: linear-gradient(90deg, #0052cc 0%, #0099cc 100%);
+}
+.create-project-error {
+  color: #ff4d4f;
+  text-align: center;
+  margin-bottom: 8px;
+}

@@ -1,0 +1,223 @@
+:root {
+    --primary-blue: #0072ff;
+    --accent-pink: #ff0080;
+    --dark-bg: #050505;
+    --text-light: #e8e8e8;
+}
+
+/* Page wrapper */
+.pageWrapper {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--dark-bg);
+    overflow: hidden;
+    z-index: 1;
+}
+
+/* Animated background (visual only) */
+.animatedBg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 20% 30%, rgba(0, 114, 255, 0.25), transparent 60%),
+        radial-gradient(circle at 80% 70%, rgba(255, 0, 128, 0.2), transparent 60%),
+        linear-gradient(120deg, #050505, #0a0a0a, #080808);
+    filter: blur(60px);
+    animation: slowMove 18s ease-in-out infinite alternate;
+}
+
+@keyframes slowMove {
+    from {
+        transform: translateY(0);
+    }
+
+    to {
+        transform: translateY(40px);
+    }
+}
+
+/* Card */
+.registerContainer {
+    position: relative;
+    z-index: 2;
+    width: 440px;
+    padding: 42px 34px;
+    border-radius: 20px;
+    background: linear-gradient(180deg, #121212, #0c0c0c);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    color: var(--text-light);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Title */
+.title {
+    font-size: 2.1rem;
+    font-weight: 600;
+    margin-bottom: 26px;
+
+    background: linear-gradient(90deg,
+            var(--primary-blue),
+            var(--accent-pink),
+            var(--primary-blue));
+    background-size: 300% 300%;
+
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+
+    animation: gradientFlow 6s ease-in-out infinite;
+}
+
+.title {
+  font-size: 2.1rem;
+  font-weight: 600;
+  margin-bottom: 26px;
+
+  background: linear-gradient(
+    90deg,
+    var(--primary-blue),
+    var(--accent-pink),
+    var(--primary-blue)
+  );
+  background-size: 300% 300%;
+
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  animation: gradientFlow 6s ease-in-out infinite;
+}
+.title {
+  font-size: 2.1rem;
+  font-weight: 600;
+  margin-bottom: 26px;
+
+  background: linear-gradient(
+    90deg,
+    var(--primary-blue),
+    var(--accent-pink),
+    var(--primary-blue)
+  );
+  background-size: 300% 300%;
+
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  animation: gradientFlow 6s ease-in-out infinite;
+}
+@keyframes gradientFlow {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/* Form */
+.form {
+    width: 100%;
+}
+
+/* Inputs */
+.inputField {
+    width: 100%;
+    margin-bottom: 16px;
+}
+
+/* Register button */
+.registerButton {
+    width: 100%;
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    background: linear-gradient(90deg,
+            var(--primary-blue),
+            var(--accent-pink));
+    transition: box-shadow 0.3s ease;
+}
+
+.registerButton:hover {
+    box-shadow: 0 0 18px rgba(0, 114, 255, 0.45);
+}
+
+/* Error / Success */
+.error {
+    color: #ff6b6b;
+    font-size: 0.9rem;
+    margin: 6px 0;
+    text-align: center;
+}
+
+.success {
+    color: #4caf50;
+    font-size: 0.9rem;
+    margin: 6px 0;
+    text-align: center;
+}
+
+/* Footer */
+.footer {
+    margin-top: 18px;
+    font-size: 0.9rem;
+    color: #aaa;
+}
+
+.footer a {
+    margin-left: 6px;
+    color: var(--primary-blue);
+    text-decoration: underline;
+}
+
+/* ===============================
+   Google
+   =============================== */
+
+.googleSection {
+    width: 100%;
+    margin-top: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+
+.divider {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    margin: 12px 0 16px;
+    opacity: 0.6;
+}
+
+.divider::before,
+.divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right,
+            transparent,
+            rgba(255, 255, 255, 0.25),
+            transparent);
+}
+
+.divider span {
+    padding: 0 12px;
+    font-size: 0.75rem;
+    color: #aaa;
+    letter-spacing: 0.1em;
+}

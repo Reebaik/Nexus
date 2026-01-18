@@ -1,0 +1,52 @@
+
+import { Routes, Route, Navigate } from 'react-router-dom';
+import HomePage from './pages/HomePage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import Navbar from './components/Navbar';
+import CreateProjectPage from './pages/CreateProjectPage';
+import MyProjectsPage from './pages/MyProjectsPage';
+import ProjectLayout from './pages/ProjectLayout';
+import ProjectOverviewPageNew from './pages/ProjectOverviewPageNew';
+import ProjectFoundationsPage from './pages/ProjectFoundationsPage';
+import ProjectPlanningPage from './pages/ProjectPlanningPage';
+import ProjectExecutionPage from './pages/ProjectExecutionPage';
+import ProjectTrackingPage from './pages/ProjectTrackingPage';
+import ProjectInsightsPage from './pages/ProjectInsightsPage';
+import { UserProvider } from './contexts/UserContext';
+import './App.css';
+
+
+
+
+
+function App() {
+  return (
+    <UserProvider>
+      <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+        <Navbar />
+        <div style={{ flex: 1, marginTop: 60 }}>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/create-project" element={<CreateProjectPage />} />
+            <Route path="/projects" element={<MyProjectsPage />} />
+            <Route path="/projects/:id" element={<ProjectLayout />}>
+              <Route index element={<Navigate to="overview" replace />} />
+              <Route path="overview" element={<ProjectOverviewPageNew />} />
+              <Route path="foundations" element={<ProjectFoundationsPage />} />
+              <Route path="planning" element={<ProjectPlanningPage />} />
+              <Route path="execution" element={<ProjectExecutionPage />} />
+              <Route path="tracking" element={<ProjectTrackingPage />} />
+              <Route path="insights" element={<ProjectInsightsPage />} />
+            </Route>
+            {/* Add more routes here later */}
+          </Routes>
+        </div>
+      </div>
+    </UserProvider>
+  );
+}
+
+export default App;

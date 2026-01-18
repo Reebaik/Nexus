@@ -1,0 +1,571 @@
+.ganttChart {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.chartHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.headerLeft h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.viewControls {
+  display: flex;
+  gap: 4px;
+  background: #f3f4f6;
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.viewButton {
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.viewButton:hover {
+  color: #374151;
+}
+
+.viewButton.active {
+  background: white;
+  color: #1f2937;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.legend {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.legendSection {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-left: 16px;
+  padding-left: 16px;
+  border-left: 1px solid #e5e7eb;
+}
+
+.legendTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  margin-right: 8px;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.legendColor {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.chartContainer {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+}
+
+.taskList {
+  width: 300px;
+  border-right: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.taskHeader {
+  display: grid;
+  grid-template-columns: 1fr 100px 80px;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.taskRow,
+.milestoneRow {
+  display: grid;
+  grid-template-columns: 1fr 100px 80px;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 12px;
+}
+
+.milestoneRow {
+  background: #faf5ff;
+}
+
+.taskInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.taskId {
+  color: #9ca3af;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.taskTitle {
+  color: #1f2937;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.taskAssignee {
+  color: #6b7280;
+  font-size: 11px;
+}
+
+.taskDuration {
+  color: #6b7280;
+  font-size: 11px;
+}
+
+.timeline {
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.dateHeader {
+  display: flex;
+  height: 40px;
+  background: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.dateColumn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b7280;
+  border-right: 1px solid #e5e7eb;
+}
+
+.dateColumn.today {
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.timelineGrid {
+  position: relative;
+  min-height: 400px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent calc(100% / var(--column-count) - 1px),
+    #e5e7eb calc(100% / var(--column-count) - 1px),
+    #e5e7eb calc(100% / var(--column-count))
+  );
+}
+
+.timelineRow {
+  height: 48px;
+  border-bottom: 1px solid #f3f4f6;
+  position: relative;
+}
+
+.taskBar {
+  position: absolute;
+  top: 8px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  position: relative;
+}
+
+.taskBarBackground {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+}
+
+.taskBarProgress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  border-radius: 6px 0 0 6px;
+  transition: width 0.3s ease;
+}
+
+.taskBar:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.taskBarContent {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+  padding: 0 4px;
+  min-height: 32px;
+}
+
+.taskBarTitle {
+  color: white;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: unset;
+  z-index: 2;
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.taskBarDuration {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 9px;
+  font-weight: 600;
+  margin-left: auto;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 4px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.taskBarProgress {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 9px;
+  font-weight: 600;
+  margin-left: auto;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 4px;
+  border-radius: 3px;
+  z-index: 2;
+  position: relative;
+}
+
+.taskBarDueDate {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 9px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.taskBarAssignee {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 9px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.milestoneMarker {
+  position: absolute;
+  top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  flex-direction: column;
+}
+
+.milestoneProgress {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.milestoneProgressBar {
+  width: 40px;
+  height: 4px;
+  background: #e5e7eb;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.milestoneProgressBar::after {
+  content: '';
+  display: block;
+  height: 100%;
+  background: #10b981;
+  border-radius: 2px;
+}
+
+.milestoneProgressText {
+  font-size: 9px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.milestoneDiamond {
+  width: 12px;
+  height: 12px;
+  background: #8b5cf6;
+  transform: rotate(45deg);
+  border-radius: 2px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.3s ease;
+}
+
+.milestoneLabel {
+  font-size: 10px;
+  color: #6b7280;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.taskModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modalHeader h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.closeButton:hover {
+  background: #f3f4f6;
+}
+
+.modalBody {
+  padding: 20px;
+}
+
+.taskDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detailRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.label {
+  font-weight: 600;
+  color: #374151;
+  min-width: 120px;
+  font-size: 14px;
+}
+
+.status {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+  .taskList {
+    width: 250px;
+  }
+  
+  .taskHeader,
+  .taskRow,
+  .milestoneRow {
+    grid-template-columns: 1fr 80px 60px;
+  }
+}
+
+@media (max-width: 768px) {
+  .ganttChart {
+    padding: 12px;
+  }
+  
+  .chartHeader {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  
+  .taskList {
+    width: 200px;
+  }
+  
+  .taskHeader,
+  .taskRow,
+  .milestoneRow {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  
+  .taskAssignee,
+  .taskDuration {
+    display: none;
+  }
+  
+  .modalContent {
+    width: 95%;
+    margin: 20px;
+  }
+}
+
+/* Scrollbar styling */
+.timeline::-webkit-scrollbar {
+  height: 8px;
+}
+
+.timeline::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.timeline::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.timeline::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Grid lines for better readability */
+.timelineRow::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent calc(100% / var(--column-count) - 1px),
+    #e5e7eb calc(100% / var(--column-count) - 1px),
+    #e5e7eb calc(100% / var(--column-count))
+  );
+  pointer-events: none;
+}
+
+/* Dependency lines (for future implementation) */
+.dependencyLine {
+  position: absolute;
+  background: #6b7280;
+  height: 1px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.dependencyLine::before,
+.dependencyLine::after {
+  content: '';
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: #6b7280;
+  border-radius: 50%;
+}
+
+.dependencyLine::before {
+  left: -3px;
+  top: -2.5px;
+}
+
+.dependencyLine::after {
+  right: -3px;
+  top: -2.5px;
+}

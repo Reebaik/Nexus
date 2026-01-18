@@ -1,0 +1,292 @@
+:root {
+  --primary-blue: #0072ff;
+  --accent-pink: #ff0080;
+  --dark-bg: #050505;
+  --text-light: #e8e8e8;
+}
+
+/* ===============================
+   Page wrapper (true centering)
+   =============================== */
+.pageWrapper {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--dark-bg);
+  overflow: hidden;
+  z-index: 1;
+}
+
+/* ===============================
+   Animated background (visual only)
+   =============================== */
+.animatedBg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(0, 114, 255, 0.25), transparent 60%),
+    radial-gradient(circle at 80% 70%, rgba(255, 0, 128, 0.2), transparent 60%),
+    linear-gradient(120deg, #050505, #0a0a0a, #080808);
+  filter: blur(60px);
+  animation: slowMove 18s ease-in-out infinite alternate;
+}
+
+@keyframes slowMove {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(40px);
+  }
+}
+
+/* ===============================
+   Login card
+   =============================== */
+.loginContainer {
+  position: relative;
+  z-index: 2;
+  width: 420px;
+  padding: 42px 34px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #121212, #0c0c0c);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  color: var(--text-light);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ===============================
+   Title
+   =============================== */
+.title {
+  font-size: 2.1rem;
+  font-weight: 600;
+  margin-bottom: 26px;
+
+  background: linear-gradient(90deg,
+      var(--primary-blue),
+      var(--accent-pink),
+      var(--primary-blue));
+  background-size: 300% 300%;
+
+  -webkit-background-clip: text;
+  background-clip: text;
+
+  animation: gradientFlow 6s ease-in-out infinite;
+}
+
+@keyframes gradientFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+
+/* ===============================
+   Inputs
+   =============================== */
+.inputField {
+  width: 100%;
+  margin-bottom: 18px;
+}
+
+/* ===============================
+   Buttons
+   =============================== */
+.loginButton {
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  background: linear-gradient(90deg,
+      var(--primary-blue),
+      var(--accent-pink));
+  transition: box-shadow 0.3s ease;
+}
+
+.loginButton:hover {
+  box-shadow: 0 0 18px rgba(0, 114, 255, 0.45);
+}
+
+/* ===============================
+   Google
+   =============================== */
+
+.googleSection {
+  width: 100%;
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+
+.divider {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  margin: 12px 0 16px;
+  opacity: 0.6;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right,
+      transparent,
+      rgba(255, 255, 255, 0.25),
+      transparent);
+}
+
+.divider span {
+  padding: 0 12px;
+  font-size: 0.75rem;
+  color: #aaa;
+  letter-spacing: 0.1em;
+}
+
+/* ===============================
+   Error
+   =============================== */
+.error {
+  color: #ff6b6b;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+}
+
+/* ===============================
+   Footer
+   =============================== */
+.footer {
+  margin-top: 16px;
+  font-size: 0.9rem;
+  color: #aaa;
+}
+
+.footer a {
+  margin-left: 6px;
+  color: var(--primary-blue);
+  text-decoration: underline;
+}
+
+/* Member Management Styles */
+.memberManagement {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.memberInput {
+  position: relative;
+}
+
+.memberSearchResults {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: rgba(26, 26, 26, 0.95);
+  border: 1px solid rgba(0, 114, 255, 0.6);
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  pointer-events: auto;
+}
+
+.memberResult {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background-color 0.2s ease;
+}
+
+.memberResult:hover {
+  background: rgba(0, 114, 255, 0.1);
+}
+
+.memberInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.memberUsername {
+  font-weight: 600;
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.memberEmail {
+  color: #aaa;
+  font-size: 0.8rem;
+}
+
+.noResults {
+  padding: 16px;
+  text-align: center;
+  color: #aaa;
+  font-style: italic;
+}
+
+.memberList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.memberChip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 114, 255, 0.2);
+  border: 1px solid rgba(0, 114, 255, 0.4);
+  border-radius: 16px;
+  padding: 6px 12px;
+  color: #fff;
+  font-size: 0.85rem;
+}
+
+.removeMember {
+  background: none;
+  border: none;
+  color: #ff4444;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 2px;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.removeMember:hover {
+  background: rgba(255, 68, 68, 0.2);
+  color: #fff;
+}

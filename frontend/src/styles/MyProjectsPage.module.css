@@ -1,0 +1,328 @@
+.page {
+    position: relative;
+    z-index: 2;
+    min-height: 100vh;
+    background-color: #000;
+    padding: 32px;
+    color: #fff;
+}
+
+/* Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+/* States */
+.loading,
+.empty {
+    color: #aaa;
+    font-size: 16px;
+}
+
+.error {
+    color: #ff5252;
+    font-size: 16px;
+}
+
+/* Project Card */
+.projectCard {
+    display: block;
+    margin-bottom: 18px;
+    padding: 26px;
+    background: linear-gradient(180deg,
+            rgba(26, 26, 26, 0.9),
+            rgba(18, 18, 18, 0.9));
+    border: 2px solid rgba(0, 114, 255, 0.6);
+    border-radius: 14px;
+    text-decoration: none;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    backdrop-filter: blur(10px);
+}
+
+.projectCard:hover {
+    transform: translateY(-4px);
+    border-color: #ff0080;
+    box-shadow: 0 12px 36px rgba(0, 114, 255, 0.35);
+    background: linear-gradient(180deg,
+            rgba(30, 30, 30, 0.95),
+            rgba(20, 20, 20, 0.95));
+}
+
+/* Project Content */
+.projectName {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.objective {
+    font-size: 1rem;
+    color: #ccc;
+    margin-bottom: 14px;
+    line-height: 1.5;
+}
+
+/* Meta Info */
+.metaGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+    margin-top: 12px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.metaItem {
+    font-size: 0.9rem;
+    color: #aaa;
+}
+
+.metaLabel {
+    font-size: 0.7rem;
+    color: #0072ff;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+/* Project Actions */
+.projectActions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+/* Modal Styles */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.modal {
+    background: linear-gradient(180deg,
+            rgba(26, 26, 26, 0.95),
+            rgba(18, 18, 18, 0.95));
+    border: 2px solid rgba(0, 114, 255, 0.6);
+    border-radius: 14px;
+    padding: 0;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+}
+
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modalHeader h2 {
+    margin: 0;
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.closeButton {
+    background: none;
+    border: none;
+    color: #aaa;
+    font-size: 2rem;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.closeButton:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.modalContent {
+    padding: 24px;
+}
+
+.formGroup {
+    margin-bottom: 20px;
+}
+
+.formRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.formLabel {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #fff;
+    font-size: 0.9rem;
+}
+
+.formInput,
+.formTextarea {
+    width: 100%;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.formInput:focus,
+.formTextarea:focus {
+    outline: none;
+    border-color: #0072ff;
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 3px rgba(0, 114, 255, 0.2);
+}
+
+.formTextarea {
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+}
+
+.modalActions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding: 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Member Management Styles */
+.memberManagement {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.memberInput {
+    position: relative;
+}
+
+.memberSearchResults {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: rgba(26, 26, 26, 0.95);
+    border: 1px solid rgba(0, 114, 255, 0.6);
+    border-radius: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    pointer-events: auto;
+}
+
+.memberResult {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: background-color 0.2s ease;
+}
+
+.memberResult:hover {
+    background: rgba(0, 114, 255, 0.1);
+}
+
+.memberInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.memberUsername {
+    font-weight: 600;
+    color: #fff;
+    font-size: 0.9rem;
+}
+
+.memberEmail {
+    color: #aaa;
+    font-size: 0.8rem;
+}
+
+.noResults {
+    padding: 16px;
+    text-align: center;
+    color: #aaa;
+    font-style: italic;
+}
+
+.memberList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.memberChip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0, 114, 255, 0.2);
+    border: 1px solid rgba(0, 114, 255, 0.4);
+    border-radius: 16px;
+    padding: 6px 12px;
+    color: #fff;
+    font-size: 0.85rem;
+}
+
+.removeMember {
+    background: none;
+    border: none;
+    color: #ff4444;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 2px;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.removeMember:hover {
+    background: rgba(255, 68, 68, 0.2);
+    color: #fff;
+}
