@@ -7,6 +7,25 @@ const projectSchema = new mongoose.Schema({
   startDate: { type: Date, required: true },
   targetEndDate: { type: Date, required: true },
   teamMembers: [{ type: String }], // store usernames or emails for now
+  github: {
+    repoOwner: { type: String },
+    repoName: { type: String },
+    installationId: { type: String }
+  },
+  githubActivity: [{
+    type: { type: String, enum: ['push', 'pull_request'], required: true },
+    actor: { type: String },
+    action: { type: String },
+    ref: { type: String },
+    prNumber: { type: Number },
+    merged: { type: Boolean },
+    commitCount: { type: Number },
+    commits: [{
+      sha: { type: String },
+      message: { type: String }
+    }],
+    date: { type: Date, default: Date.now }
+  }],
   functionalRequirements: [{
     id: { type: String, required: true },
     title: { type: String, required: true },
@@ -49,6 +68,13 @@ const projectSchema = new mongoose.Schema({
       author: { type: String, required: true },
       content: { type: String, required: true },
       date: { type: Date, default: Date.now }
+    }],
+    commits: [{
+      sha: { type: String, required: true },
+      message: { type: String, required: true },
+      author: { type: String },
+      url: { type: String },
+      date: { type: Date }
     }],
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }

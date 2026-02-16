@@ -196,7 +196,7 @@ const ProjectFoundationsPage: React.FC = () => {
               )}
             </div>
             <div className={styles.requirementsTable}>
-              {project.functionalRequirements?.length > 5 ? (
+              {(project.functionalRequirements?.length ?? 0) > 5 ? (
                 <div className={styles.scrollableTable}>
                   <table>
                     <thead>
@@ -383,7 +383,7 @@ const ProjectFoundationsPage: React.FC = () => {
               )}
             </div>
             <div className={styles.requirementsTable}>
-              {project.nonFunctionalRequirements?.length > 5 ? (
+              {(project.nonFunctionalRequirements?.length ?? 0) > 5 ? (
                 <div className={styles.scrollableTable}>
                   <table>
                     <thead>

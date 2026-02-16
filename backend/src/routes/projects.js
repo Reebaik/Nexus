@@ -1,9 +1,12 @@
 
+import '../config/env.js';
 import express from 'express';
 import Project from '../models/Project.js';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import mongoose from 'mongoose';
+import eventBus from '../events/eventBus.js';
+import githubService from '../services/githubService.js';
 
 const router = express.Router();
 
@@ -80,6 +83,75 @@ router.get('/:id', authMiddleware, async (req, res) => {
   }
 });
 
+// GET /projects/:id/github/activity - get GitHub activity for a project
+router.get('/:id/github/activity', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    const username = user ? user.username : req.user.userId;
+    
+    const project = await Project.findOne({
+      _id: new mongoose.Types.ObjectId(req.params.id),
+      $or: [
+        { createdBy: req.user.userId },
+        { teamMembers: username }
+      ]
+    });
+
+    if (!project) return res.status(404).json({ message: 'Project not found' });
+    const activity = Array.isArray(project.githubActivity)
+      ? [...project.githubActivity].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 100)
+      : [];
+    res.json({
+      repo: project.github || null,
+      activity
+    });
+  } catch (err) {
+    console.error('Error fetching GitHub activity:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// POST /projects/:id/github/sync - fetch commits and PRs from GitHub and store
+router.post('/:id/github/sync', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    const username = user ? user.username : req.user.userId;
+
+    // First check if user has access to the project
+    const projectCheck = await Project.findOne({
+      _id: new mongoose.Types.ObjectId(req.params.id),
+      $or: [
+        { createdBy: req.user.userId },
+        { teamMembers: username }
+      ]
+    });
+    
+    if (!projectCheck) return res.status(404).json({ message: 'Project not found' });
+
+    // Use the sync service (we pass userId for context, but we verified access above)
+    // Note: syncProjectById originally checked createdBy. We need to bypass that check or update the service.
+    // Instead of syncProjectById, we can use syncProject directly since we already have the project.
+    
+    const project = await githubService.syncProject(projectCheck);
+    
+    if (!project) return res.status(404).json({ message: 'Project not found or no repo configured' });
+    
+    // We need to re-fetch or use the updated project object
+    // syncProject modifies the project object and saves it, returning the modified object.
+    
+    const activity = Array.isArray(project.githubActivity)
+      ? [...project.githubActivity].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 100)
+      : [];
+    res.json({
+      repo: project.github || null,
+      activity
+    });
+  } catch (err) {
+    console.error('Error syncing GitHub activity:', err);
+    res.status(500).json({ message: 'Server error', details: err.message });
+  }
+});
+
 // GET /projects - list all projects for the logged-in user (owner or team member)
 router.get('/', authMiddleware, async (req, res) => {
   try {
@@ -148,7 +220,7 @@ function authMiddleware(req, res, next) {
 router.post('/', authMiddleware, async (req, res) => {
   try {
     console.log('Request body:', req.body);
-    const { name, objective, description, startDate, targetEndDate, teamMembers, functionalRequirements, nonFunctionalRequirements } = req.body;
+    const { name, objective, description, startDate, targetEndDate, teamMembers, functionalRequirements, nonFunctionalRequirements, github, repoOwner, repoName, installationId } = req.body;
     console.log('Extracted requirements:', { functionalRequirements, nonFunctionalRequirements });
     
     if (!name || !objective || !startDate || !targetEndDate) {
@@ -165,9 +237,31 @@ router.post('/', authMiddleware, async (req, res) => {
       nonFunctionalRequirements: nonFunctionalRequirements || [],
       createdBy: req.user.userId,
     });
+    if (github && typeof github === 'object') {
+      project.github = {
+        ...(project.github || {}),
+        ...github
+      };
+    } else {
+      const gh = {};
+      if (repoOwner) gh.repoOwner = repoOwner;
+      if (repoName) gh.repoName = repoName;
+      if (installationId) gh.installationId = installationId;
+      if (Object.keys(gh).length > 0) {
+        project.github = {
+          ...(project.github || {}),
+          ...gh
+        };
+      }
+    }
     console.log('Project before save:', project);
     await project.save();
     console.log('Project after save:', project);
+    
+    const user = await User.findById(req.user.userId);
+    const creator = user ? user.username : 'Unknown';
+    eventBus.emit('project.created', { project, creator });
+    
     res.status(201).json({ message: 'Project created', project });
   } catch (err) {
     console.error('Error creating project:', err);
@@ -185,6 +279,9 @@ router.put('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ message: 'Project not found' });
     }
 
+    // Track previous team members for Slack notifications
+    const previousTeamMembers = project.teamMembers || [];
+
     // Update project fields
     if (name) project.name = name;
     if (objective) project.objective = objective;
@@ -192,8 +289,34 @@ router.put('/:id', authMiddleware, async (req, res) => {
     if (startDate) project.startDate = new Date(startDate);
     if (targetEndDate) project.targetEndDate = new Date(targetEndDate);
     if (teamMembers) project.teamMembers = teamMembers;
+    if (req.body.github) {
+      project.github = {
+        ...(project.github || {}),
+        ...(req.body.github || {})
+      };
+    } else {
+      const { repoOwner, repoName, installationId } = req.body;
+      if (repoOwner || repoName || installationId) {
+        project.github = {
+          ...(project.github || {}),
+          ...(repoOwner ? { repoOwner } : {}),
+          ...(repoName ? { repoName } : {}),
+          ...(installationId ? { installationId } : {})
+        };
+      }
+    }
 
     await project.save();
+    
+    if (teamMembers) {
+      const user = await User.findById(req.user.userId);
+      const addedBy = user ? user.username : 'Unknown';
+      const newMembers = teamMembers.filter(member => !previousTeamMembers.includes(member));
+      for (const member of newMembers) {
+        eventBus.emit('team.member.added', { project, member, addedBy });
+      }
+    }
+    
     res.json({ message: 'Project updated successfully', project });
   } catch (err) {
     console.error('Error updating project:', err);
@@ -234,6 +357,22 @@ router.put('/:id', authMiddleware, async (req, res) => {
     if (startDate) project.startDate = new Date(startDate);
     if (targetEndDate) project.targetEndDate = new Date(targetEndDate);
     if (teamMembers) project.teamMembers = teamMembers;
+    if (req.body.github) {
+      project.github = {
+        ...(project.github || {}),
+        ...(req.body.github || {})
+      };
+    } else {
+      const { repoOwner, repoName, installationId } = req.body;
+      if (repoOwner || repoName || installationId) {
+        project.github = {
+          ...(project.github || {}),
+          ...(repoOwner ? { repoOwner } : {}),
+          ...(repoName ? { repoName } : {}),
+          ...(installationId ? { installationId } : {})
+        };
+      }
+    }
 
     await project.save();
     res.json({ message: 'Project updated successfully', project });
@@ -517,6 +656,10 @@ router.put('/:id/tasks/:taskId', authMiddleware, async (req, res) => {
       delete updates.dueDate;
     }
 
+    // Track previous status for Slack notifications
+    const previousStatus = task.status;
+    const previousMembers = task.taskMembers ? [...task.taskMembers] : [];
+
     Object.assign(task, updates, { updatedAt: new Date() });
     
     // Check if task status changed and update linked requirement status
@@ -557,6 +700,36 @@ router.put('/:id/tasks/:taskId', authMiddleware, async (req, res) => {
     }
     
     await project.save();
+    
+    const updater = username;
+    
+    // Build changes summary for Slack
+    const changes = {};
+    if (updates.status && updates.status !== previousStatus) {
+      changes['Status'] = `${previousStatus} → ${updates.status}`;
+    }
+    if (updates.priority) changes['Priority'] = updates.priority;
+    if (updates.title) changes['Title'] = updates.title;
+    if (updates.taskMembers) changes['Assigned Members'] = updates.taskMembers.join(', ');
+    
+    // Send task update notification if there are changes
+    if (Object.keys(changes).length > 0) {
+      eventBus.emit('task.updated', { project, task, updater, changes });
+    }
+    
+    // Send task completed notification if status changed to 'done'
+    if (updates.status === 'done' && previousStatus !== 'done') {
+      eventBus.emit('task.completed', { project, task, completedBy: updater });
+    }
+    
+    // Notify newly assigned members
+    if (updates.taskMembers) {
+      const newMembers = updates.taskMembers.filter(member => !previousMembers.includes(member));
+      for (const member of newMembers) {
+        eventBus.emit('task.assigned', { project, task, assignee: member, assignedBy: updater });
+      }
+    }
+    
     const plainTask = task.toObject ? task.toObject() : task;
     let responseMembers = Array.isArray(plainTask.taskMembers)
       ? plainTask.taskMembers
@@ -678,6 +851,17 @@ router.post('/:id/tasks', authMiddleware, async (req, res) => {
     project.tasks.push(newTask);
     await project.save();
 
+    const user = await User.findById(req.user.userId);
+    const creator = user ? user.username : 'Unknown';
+    eventBus.emit('task.created', { project, task: newTask, creator });
+    
+    // Notify assigned members
+    if (newTask.taskMembers && newTask.taskMembers.length > 0) {
+      for (const member of newTask.taskMembers) {
+        eventBus.emit('task.assigned', { project, task: newTask, assignee: member, assignedBy: creator });
+      }
+    }
+
     res.status(201).json({ message: 'Task created', task: newTask });
   } catch (err) {
     console.error('Error creating task:', err);
@@ -768,6 +952,10 @@ router.post('/:id/milestones', authMiddleware, async (req, res) => {
     project.milestones.push(newMilestone);
     await project.save();
 
+    const user = await User.findById(req.user.userId);
+    const creator = user ? user.username : 'Unknown';
+    eventBus.emit('milestone.created', { project, milestone: newMilestone, creator });
+
     res.status(201).json({ message: 'Milestone created', milestone: newMilestone });
   } catch (err) {
     console.error('Error creating milestone:', err);
@@ -786,6 +974,9 @@ router.put('/:id/milestones/:milestoneId', authMiddleware, async (req, res) => {
     const milestoneIndex = project.milestones.findIndex(m => m.id === req.params.milestoneId);
     if (milestoneIndex === -1) return res.status(404).json({ message: 'Milestone not found' });
 
+    // Track previous status for Slack notifications
+    const previousStatus = project.milestones[milestoneIndex].status;
+
     // Update milestone fields
     if (title) project.milestones[milestoneIndex].title = title;
     if (description !== undefined) project.milestones[milestoneIndex].description = description;
@@ -793,6 +984,13 @@ router.put('/:id/milestones/:milestoneId', authMiddleware, async (req, res) => {
     if (dependencies !== undefined) project.milestones[milestoneIndex].dependencies = dependencies;
 
     await project.save();
+
+    if (project.milestones[milestoneIndex].status === 'completed' && previousStatus !== 'completed') {
+      const user = await User.findById(req.user.userId);
+      const completedBy = user ? user.username : 'Unknown';
+      eventBus.emit('milestone.completed', { project, milestone: project.milestones[milestoneIndex], completedBy });
+    }
+    eventBus.emit('milestone.updated', { project, milestone: project.milestones[milestoneIndex] });
 
     res.json({ message: 'Milestone updated', milestone: project.milestones[milestoneIndex] });
   } catch (err) {
@@ -847,6 +1045,8 @@ router.post('/:projectId/tasks/:taskId/comments', authMiddleware, async (req, re
     }
     task.comments.push(newComment);
     await project.save();
+
+    eventBus.emit('task.commented', { project, task, comment: newComment, author });
 
     res.status(201).json({ 
       message: 'Comment added successfully',

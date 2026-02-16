@@ -6,21 +6,6 @@ interface User {
   email: string;
 }
 
-interface Project {
-  _id: string;
-  name: string;
-  objective: string;
-  description: string;
-  startDate: string | Date;
-  targetEndDate: string | Date;
-  createdBy: string;
-  teamMembers?: string[];
-  functionalRequirements?: any[];
-  nonFunctionalRequirements?: any[];
-  tasks?: any[];
-  milestones?: any[];
-}
-
 interface UserContextType {
   user: User | null;
   setUser: (user: User | null) => void;

@@ -11,6 +11,11 @@ export interface Project {
   targetEndDate: string | Date;
   createdBy: string | { username: string; email: string };
   teamMembers?: string[];
+  github?: {
+    repoOwner?: string;
+    repoName?: string;
+    installationId?: string;
+  };
   functionalRequirements?: any[];
   nonFunctionalRequirements?: any[];
   tasks?: any[];
@@ -26,6 +31,7 @@ const ProjectLayout: React.FC = () => {
   const { id } = useParams();
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -41,8 +47,8 @@ const ProjectLayout: React.FC = () => {
           return;
         }
 
-        console.log('ProjectLayout - Making API call to:', `http://localhost:5000/api/projects/${id}`);
-        const response = await fetch(`http://localhost:5000/api/projects/${id}`, {
+        console.log('ProjectLayout - Making API call to:', `${import.meta.env.VITE_API_URL}/api/projects/${id}`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/projects/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -106,19 +112,30 @@ const ProjectLayout: React.FC = () => {
     );
   }
 
-  const navItems: Array<{ to: string; label: string }> = [
-    { to: 'overview', label: 'Overview' },
-    { to: 'foundations', label: 'Project Foundations' },
-    { to: 'planning', label: 'Planning' },
-    { to: 'execution', label: 'Execution' },
-    { to: 'tracking', label: 'Tracking' },
-    { to: 'insights', label: 'Insights' }
+  const navItems: Array<{ to: string; label: string; icon: string }> = [
+    { to: 'overview', label: 'Overview', icon: '📊' },
+    { to: 'foundations', label: 'Foundations', icon: '🏗️' },
+    { to: 'planning', label: 'Planning', icon: '📋' },
+    { to: 'execution', label: 'Execution', icon: '⚡' },
+    { to: 'tracking', label: 'Tracking', icon: '📈' },
+    { to: 'insights', label: 'Insights', icon: '💡' }
   ];
 
   return (
     <div className={styles.container}>
-      <aside className={styles.sidebar}>
-        <h2 className={styles.projectName}>{project.name}</h2>
+      {/* Sidebar */}
+      <aside className={`${styles.sidebar} ${!sidebarOpen ? styles.sidebarClosed : ''}`}>
+        <div className={styles.sidebarHeader}>
+          <h2 className={styles.projectName}>{project.name}</h2>
+          <button
+            className={styles.sidebarClose}
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Close navigation"
+          >
+            &times;
+          </button>
+        </div>
+        
         <nav className={styles.nav}>
           {navItems.map((item) => (
             <NavLink
@@ -129,13 +146,31 @@ const ProjectLayout: React.FC = () => {
               }
               end={item.to === 'overview'}
             >
-              {item.label}
+              <span className={styles.navIcon}>{item.icon}</span>
+              <span className={styles.navLabel}>{item.label}</span>
             </NavLink>
           ))}
         </nav>
       </aside>
 
-      <main className={styles.content}>
+      {/* Overlay to close sidebar on mobile */}
+      {sidebarOpen && (
+        <div className={styles.overlay} onClick={() => setSidebarOpen(false)} />
+      )}
+
+      {/* Main Content */}
+      <main className={`${styles.content} ${!sidebarOpen ? styles.contentExpanded : ''}`}>
+        {!sidebarOpen && (
+          <button
+            className={styles.menuButton}
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Open navigation"
+          >
+            <span className={styles.menuIcon} />
+            <span className={styles.menuIcon} />
+            <span className={styles.menuIcon} />
+          </button>
+        )}
         <Outlet context={{ project, setProject }} />
       </main>
     </div>

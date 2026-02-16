@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Button } from "@mui/material";
+import { Button, FormControlLabel, Switch } from "@mui/material";
 import { useNavigate, Link } from "react-router-dom";
 import styles from "../styles/MyProjectsPage.module.css";
 import { useUser } from "../contexts/UserContext";
@@ -13,6 +13,11 @@ interface Project {
     targetEndDate: string;
     createdBy: string | { username: string; email: string };
     teamMembers: string[];
+    github?: {
+        repoOwner?: string;
+        repoName?: string;
+        installationId?: string;
+    };
 }
 
 const MyProjectsPage: React.FC = () => {
@@ -28,12 +33,16 @@ const MyProjectsPage: React.FC = () => {
         description: "",
         startDate: "",
         targetEndDate: "",
-        teamMembers: [] as string[]
+        teamMembers: [] as string[],
+        repoOwner: "",
+        repoName: "",
+        installationId: ""
     });
     const [memberSearchQuery, setMemberSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState<Array<{ username: string, email: string }>>([]);
     const [showMemberSearch, setShowMemberSearch] = useState(false);
     const navigate = useNavigate();
+    const [repoEnabled, setRepoEnabled] = useState<boolean>(false);
 
     // Search for users when query changes
     const handleSearchMembers = async (query: string) => {
@@ -139,8 +148,12 @@ const MyProjectsPage: React.FC = () => {
             description: project.description || "",
             startDate: formatDateForInput(project.startDate),
             targetEndDate: formatDateForInput(project.targetEndDate),
-            teamMembers: project.teamMembers || []
+            teamMembers: project.teamMembers || [],
+            repoOwner: project.github?.repoOwner || "",
+            repoName: project.github?.repoName || "",
+            installationId: project.github?.installationId || ""
         });
+        setRepoEnabled(Boolean(project.github?.repoOwner && project.github?.repoName));
         setEditModalOpen(true);
     };
 
@@ -184,7 +197,20 @@ const MyProjectsPage: React.FC = () => {
                         "Content-Type": "application/json",
                         Authorization: `Bearer ${localStorage.getItem("nexus_jwt")}`,
                     },
-                    body: JSON.stringify(formData),
+                    body: JSON.stringify((() => {
+                        const { name, objective, description, startDate, targetEndDate, teamMembers, repoOwner, repoName, installationId } = formData;
+                        const payload: any = { name, objective, description, startDate, targetEndDate, teamMembers };
+                        if (repoEnabled) {
+                            const github: any = {};
+                            if (repoOwner) github.repoOwner = repoOwner.trim();
+                            if (repoName) github.repoName = repoName.trim();
+                            if (installationId) github.installationId = installationId.trim();
+                            if (github.repoOwner && github.repoName) {
+                                payload.github = github;
+                            }
+                        }
+                        return payload;
+                    })()),
                 }
             );
 
@@ -249,7 +275,10 @@ const MyProjectsPage: React.FC = () => {
             description: "",
             startDate: "",
             targetEndDate: "",
-            teamMembers: []
+            teamMembers: [],
+            repoOwner: "",
+            repoName: "",
+            installationId: ""
         });
     };
 
@@ -413,6 +442,49 @@ const MyProjectsPage: React.FC = () => {
                                         onChange={(e) => setFormData(prev => ({ ...prev, targetEndDate: e.target.value }))}
                                     />
                                 </div>
+                            </div>
+
+                        <div className={styles.formGroup}>
+                            <FormControlLabel
+                                control={<Switch checked={repoEnabled} onChange={(_, v) => setRepoEnabled(v)} />}
+                                label="Connect GitHub repository"
+                            />
+                        </div>
+
+                            <div className={styles.formRow}>
+                                <div className={styles.formGroup}>
+                                    <label className={styles.formLabel}>GitHub Repo Owner (optional)</label>
+                                    <input
+                                        type="text"
+                                        className={styles.formInput}
+                                        value={formData.repoOwner}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, repoOwner: e.target.value }))}
+                                    placeholder="e.g., acme"
+                                    disabled={!repoEnabled}
+                                    />
+                                </div>
+                                <div className={styles.formGroup}>
+                                    <label className={styles.formLabel}>GitHub Repo Name (optional)</label>
+                                    <input
+                                        type="text"
+                                        className={styles.formInput}
+                                        value={formData.repoName}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, repoName: e.target.value }))}
+                                    placeholder="e.g., nexus"
+                                    disabled={!repoEnabled}
+                                    />
+                                </div>
+                            </div>
+                            <div className={styles.formGroup}>
+                                <label className={styles.formLabel}>GitHub App Installation ID (optional)</label>
+                                <input
+                                    type="text"
+                                    className={styles.formInput}
+                                    value={formData.installationId}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, installationId: e.target.value }))}
+                                placeholder="Installation ID if using a GitHub App"
+                                disabled={!repoEnabled}
+                                />
                             </div>
 
                             <div className={styles.formGroup}>

@@ -13,6 +13,7 @@ import ProjectPlanningPage from './pages/ProjectPlanningPage';
 import ProjectExecutionPage from './pages/ProjectExecutionPage';
 import ProjectTrackingPage from './pages/ProjectTrackingPage';
 import ProjectInsightsPage from './pages/ProjectInsightsPage';
+import IntegrationsGithubConnected from './pages/IntegrationsGithubConnected';
 import { UserProvider } from './contexts/UserContext';
 import './App.css';
 
@@ -31,6 +32,7 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/create-project" element={<CreateProjectPage />} />
+            <Route path="/integrations/github/connected" element={<IntegrationsGithubConnected />} />
             <Route path="/projects" element={<MyProjectsPage />} />
             <Route path="/projects/:id" element={<ProjectLayout />}>
               <Route index element={<Navigate to="overview" replace />} />

@@ -5,6 +5,18 @@ import styles from '../styles/ProjectOverviewPage.module.css';
 import chartStyles from '../styles/TrackingCharts.module.css';
 import type { ProjectOutletContext } from './ProjectLayout';
 
+type GitHubActivityItem = {
+  type: 'push' | 'pull_request';
+  actor?: string;
+  action?: string;
+  ref?: string;
+  prNumber?: number;
+  merged?: boolean;
+  commitCount?: number;
+  commits?: Array<{ sha?: string; message?: string }>;
+  date?: string | Date;
+};
+
 interface Task {
   id: string;
   title: string;
@@ -28,6 +40,36 @@ interface Task {
 const ProjectTrackingPage: React.FC = () => {
   const { project } = useOutletContext<ProjectOutletContext>();
   const tasks = (project.tasks ?? []) as Task[];
+  const [ghLoading, setGhLoading] = React.useState(false);
+  const [ghRepo, setGhRepo] = React.useState<{ repoOwner?: string; repoName?: string } | null>(null);
+  const [ghActivity, setGhActivity] = React.useState<GitHubActivityItem[]>([]);
+
+  React.useEffect(() => {
+    const run = async () => {
+      try {
+        setGhLoading(true);
+        const token = localStorage.getItem('nexus_jwt') || '';
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/projects/${project._id}/github/activity`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setGhRepo(data.repo || null);
+          setGhActivity(Array.isArray(data.activity) ? data.activity : []);
+        } else {
+          setGhRepo(null);
+          setGhActivity([]);
+        }
+      } catch {
+        setGhRepo(null);
+        setGhActivity([]);
+      } finally {
+        setGhLoading(false);
+      }
+    };
+    if (project?._id) run();
+  }, [project?._id]);
 
   const getTaskMembers = (task: Task): string[] => {
     if (Array.isArray(task.taskMembers) && task.taskMembers.length > 0) return task.taskMembers;
@@ -546,6 +588,65 @@ const ProjectTrackingPage: React.FC = () => {
                 <div className={chartStyles.metricLabel}>Team Members</div>
               </div>
             </div>
+          </div>
+
+          <div className={chartStyles.chartBlock}>
+            <div className={chartStyles.chartHeader}>
+              <h2 className={chartStyles.chartTitle}>GitHub Activity</h2>
+              <p className={chartStyles.chartSubtitle}>Recent commits and pull requests</p>
+            </div>
+            {ghLoading ? (
+              <p style={{ padding: 12 }}>Loading…</p>
+            ) : ghActivity.length === 0 ? (
+              <p style={{ padding: 12 }}>No recent activity.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {ghRepo?.repoOwner && ghRepo?.repoName && (
+                  <p style={{ opacity: 0.9 }}>
+                    <a href={`https://github.com/${ghRepo.repoOwner}/${ghRepo.repoName}`} target="_blank" rel="noreferrer">
+                      {ghRepo.repoOwner}/{ghRepo.repoName}
+                    </a>
+                  </p>
+                )}
+                {ghActivity.map((item, idx) => (
+                  <div key={idx} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '12px 0', borderBottom: '1px solid rgba(0,0,0,0.1)' }}>
+                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
+                      {item.type === 'push' ? '⬆️' : '🔀'}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      {item.type === 'push' ? (
+                        <div>
+                          <div style={{ fontSize: 14 }}>
+                            <strong>{item.actor || 'Someone'}</strong> pushed {item.commitCount || 0} commit{(item.commitCount || 0) === 1 ? '' : 's'} {item.ref ? `to ${item.ref}` : ''}
+                          </div>
+                          {item.commits && item.commits.length > 0 && (
+                            <ul style={{ marginTop: 6, paddingLeft: 18 }}>
+                              {item.commits.slice(0, 3).map((c, i) => (
+                                <li key={i} style={{ fontSize: 13, opacity: 0.9 }}>
+                                  {(c.sha || '').slice(0, 7)} — {c.message}
+                                </li>
+                              ))}
+                              {item.commits.length > 3 && (
+                                <li style={{ fontSize: 13, opacity: 0.7 }}>
+                                  …and {item.commits.length - 3} more
+                                </li>
+                              )}
+                            </ul>
+                          )}
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: 14 }}>
+                          <strong>{item.actor || 'Someone'}</strong> {item.action || 'updated'} PR #{item.prNumber} {item.merged ? '(merged)' : ''} {item.ref ? `on ${item.ref}` : ''}
+                        </div>
+                      )}
+                      <div style={{ fontSize: 12, opacity: 0.7, marginTop: 4 }}>
+                        {item.date ? new Date(item.date).toLocaleString() : ''}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
     </section>
   );

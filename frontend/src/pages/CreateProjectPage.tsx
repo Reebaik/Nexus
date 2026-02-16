@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import styles from '../styles/LoginPage.module.css';
-import { TextField, Button, Paper } from '@mui/material';
+import { TextField, Button, Paper, FormControlLabel, Switch } from '@mui/material';
 import { motion } from 'framer-motion';
 import Tilt from 'react-parallax-tilt';
 import RequirementModal from '../components/RequirementModal';
@@ -37,6 +37,10 @@ const CreateProjectPage: React.FC = () => {
   const [success, setSuccess] = useState('');
   const [functionalRequirements, setFunctionalRequirements] = useState<FunctionalRequirement[]>([]);
   const [nonFunctionalRequirements, setNonFunctionalRequirements] = useState<NonFunctionalRequirement[]>([]);
+  const [repoOwner, setRepoOwner] = useState('');
+  const [repoName, setRepoName] = useState('');
+  const [installationId, setInstallationId] = useState('');
+  const [repoEnabled, setRepoEnabled] = useState(false);
   const [modalState, setModalState] = useState({
     isOpen: false,
     type: 'functional' as 'functional' | 'non-functional',
@@ -159,6 +163,14 @@ const CreateProjectPage: React.FC = () => {
       setError('Please fill all required fields');
       return;
     }
+    if (repoEnabled) {
+      const hasOwner = repoOwner && repoOwner.trim().length > 0;
+      const hasName = repoName && repoName.trim().length > 0;
+      if (hasOwner !== hasName) {
+        setError('Please provide both GitHub repo owner and repo name, or leave both empty.');
+        return;
+      }
+    }
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/projects`, {
         method: 'POST',
@@ -166,16 +178,28 @@ const CreateProjectPage: React.FC = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('nexus_jwt')}`,
         },
-        body: JSON.stringify({
-          name,
-          objective,
-          description,
-          startDate,
-          targetEndDate,
-          teamMembers,
-          functionalRequirements,
-          nonFunctionalRequirements
-        })
+        body: JSON.stringify((() => {
+          const payload: any = {
+            name,
+            objective,
+            description,
+            startDate,
+            targetEndDate,
+            teamMembers,
+            functionalRequirements,
+            nonFunctionalRequirements
+          };
+          if (repoEnabled) {
+            const github: any = {};
+            if (repoOwner) github.repoOwner = repoOwner.trim();
+            if (repoName) github.repoName = repoName.trim();
+            if (installationId) github.installationId = installationId.trim();
+            if (github.repoOwner && github.repoName) {
+              payload.github = github;
+            }
+          }
+          return payload;
+        })())
       });
       const data = await res.json();
       if (!res.ok) setError(data.message || 'Failed to create project');
@@ -241,6 +265,84 @@ const CreateProjectPage: React.FC = () => {
                     },
                   }}
                 />
+              </div>
+              <div className={styles.inputField} style={{ marginBottom: 20, width: '95%' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <h3 style={{ color: '#fff', margin: '8px 0 12px', fontSize: 16 }}>GitHub (optional)</h3>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={repoEnabled}
+                        onChange={(_, v) => setRepoEnabled(v)}
+                        color="primary"
+                      />
+                    }
+                    label={<span style={{ color: '#ddd' }}>Connect repository</span>}
+                  />
+                </div>
+                {repoEnabled && (
+                  <>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, width: '100%' }}>
+                      <TextField
+                        fullWidth
+                        label="Repo Owner"
+                        value={repoOwner}
+                        onChange={e => setRepoOwner(e.target.value)}
+                        InputProps={{
+                          style: { color: '#fff', fontSize: 16, height: 48, background: '#222', borderRadius: 8, border: '1.5px solid #444' },
+                        }}
+                        InputLabelProps={{ style: { color: '#aaa', fontSize: 16 } }}
+                        sx={{
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#444',
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#0072ff',
+                          },
+                        }}
+                      />
+                      <TextField
+                        fullWidth
+                        label="Repo Name"
+                        value={repoName}
+                        onChange={e => setRepoName(e.target.value)}
+                        InputProps={{
+                          style: { color: '#fff', fontSize: 16, height: 48, background: '#222', borderRadius: 8, border: '1.5px solid #444' },
+                        }}
+                        InputLabelProps={{ style: { color: '#aaa', fontSize: 16 } }}
+                        sx={{
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#444',
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#0072ff',
+                          },
+                        }}
+                      />
+                    </div>
+                    <div style={{ marginTop: 12 }}>
+                      <TextField
+                        fullWidth
+                        label="GitHub App Installation ID"
+                        value={installationId}
+                        onChange={e => setInstallationId(e.target.value)}
+                        placeholder="Optional"
+                        InputProps={{
+                          style: { color: '#fff', fontSize: 16, height: 48, background: '#222', borderRadius: 8, border: '1.5px solid #444' },
+                        }}
+                        InputLabelProps={{ style: { color: '#aaa', fontSize: 16 } }}
+                        sx={{
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#444',
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#0072ff',
+                          },
+                        }}
+                      />
+                    </div>
+                  </>
+                )}
               </div>
               <div className={styles.inputField} style={{ marginBottom: 20, width: '95%' }}>
                 <TextField
