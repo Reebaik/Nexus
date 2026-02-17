@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styles from '../styles/ProjectPlanningPage.module.css';
+import { DatePicker, ConfigProvider, theme } from 'antd';
+import dayjs from 'dayjs';
 
 interface Task {
   id: string;
@@ -105,110 +107,115 @@ const MilestoneModal: React.FC<MilestoneModalProps> = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className={styles.modalForm}>
-          <div className={styles.formGroup}>
-            <label htmlFor="title">Milestone Title *</label>
-            <input
-              type="text"
-              id="title"
-              value={formData.title}
-              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="e.g., MVP Ready, Phase 1 Complete"
-              className={styles.formInput}
-            />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label htmlFor="description">Description</label>
-            <textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="What must be completed by this milestone?"
-              className={styles.formTextarea}
-              rows={3}
-            />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label htmlFor="date">Target Date *</label>
-            <div className={styles.dateInputContainer}>
+        <div className={styles.modalContent}>
+          <form onSubmit={handleSubmit} className={styles.modalForm}>
+            <div className={styles.formGroup}>
+              <label htmlFor="title">Milestone Title *</label>
               <input
-                type="date"
-                id="date"
-                value={formData.date}
-                onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                type="text"
+                id="title"
+                value={formData.title}
+                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                placeholder="e.g., MVP Ready, Phase 1 Complete"
                 className={styles.formInput}
-                min={new Date().toISOString().split('T')[0]}
-                style={{ paddingRight: '50px' }}
               />
-              <div className={styles.calendarIconWrapper}>
-                <button 
-                  type="button"
-                  className={styles.calendarIcon}
-                  onClick={() => {
-                    const dateInput = document.getElementById('date') as HTMLInputElement;
-                    if (dateInput && typeof dateInput.showPicker === 'function') {
-                      dateInput.showPicker();
-                    } else if (dateInput) {
-                      dateInput.focus();
+            </div>
+
+            <div className={styles.formGroup}>
+              <label htmlFor="description">Description</label>
+              <textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="What must be completed by this milestone?"
+                className={styles.formTextarea}
+                rows={3}
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label htmlFor="date">Target Date *</label>
+              <div className={styles.dateInputContainer}>
+                <ConfigProvider
+                  theme={{
+                    algorithm: theme.darkAlgorithm,
+                    token: {
+                      colorBgContainer: 'rgba(255, 255, 255, 0.05)',
+                      colorBorder: 'rgba(255, 255, 255, 0.2)',
+                      colorText: '#fff',
+                      colorTextPlaceholder: 'rgba(255, 255, 255, 0.4)',
                     }
                   }}
-                  aria-label="Open calendar"
                 >
-                  📅
-                </button>
+                  <DatePicker
+                    className={styles.formInput}
+                    value={formData.date ? dayjs(formData.date) : null}
+                    onChange={(date) => setFormData(prev => ({ ...prev, date: date ? date.format('YYYY-MM-DD') : '' }))}
+                    style={{ 
+                      width: '100%', 
+                      padding: '14px 18px', 
+                      background: 'rgba(255, 255, 255, 0.05)', 
+                      border: '1px solid rgba(255, 255, 255, 0.2)', 
+                      color: '#fff', 
+                      height: '48px'
+                    }}
+                    format="YYYY-MM-DD"
+                    placeholder="Select date"
+                    allowClear={false}
+                    suffixIcon={<span style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '1.2rem' }}>📅</span>}
+                  />
+                </ConfigProvider>
               </div>
             </div>
-          </div>
 
-          <div className={styles.formGroup}>
-            <label>Linked Tasks</label>
-            <p className={styles.formHelp}>
-              Select tasks that must be completed for this milestone
-            </p>
-            <div className={styles.taskSelectionList}>
-              {availableTasks.length === 0 ? (
-                <p className={styles.noTasksMessage}>
-                  No tasks available. Create tasks first, then link them to milestones.
-                </p>
-              ) : (
-                availableTasks.map(task => (
-                  <label key={task.id} className={styles.taskSelectionItem}>
-                    <input
-                      type="checkbox"
-                      checked={formData.dependencies.includes(task.id)}
-                      onChange={() => handleTaskToggle(task.id)}
-                      className={styles.taskCheckbox}
-                    />
-                    <span className={`${styles.taskStatus} ${styles[task.status]}`}>
-                      {task.status === 'done' ? '✅' : 
-                       task.status === 'in-progress' ? '🔄' : 
-                       task.status === 'blocked' ? '🚫' : '⭕'}
-                    </span>
-                    <span className={styles.taskTitle}>{task.title}</span>
-                  </label>
-                ))
-              )}
+            <div className={styles.formGroup}>
+              <label>Linked Tasks</label>
+              <p className={styles.formHelp}>
+                Select tasks that must be completed for this milestone
+              </p>
+              <div className={styles.taskSelectionList}>
+                {availableTasks.length === 0 ? (
+                  <p className={styles.noTasksMessage}>
+                    No tasks available. Create tasks first, then link them to milestones.
+                  </p>
+                ) : (
+                  availableTasks.map(task => (
+                    <label key={task.id} className={styles.taskSelectionItem}>
+                      <input
+                        type="checkbox"
+                        checked={formData.dependencies.includes(task.id)}
+                        onChange={() => handleTaskToggle(task.id)}
+                        className={styles.taskCheckbox}
+                      />
+                      <span className={`${styles.taskStatus} ${styles[task.status]}`}>
+                        {task.status === 'done' ? '✅' : 
+                         task.status === 'in-progress' ? '🔄' : 
+                         task.status === 'blocked' ? '🚫' : '⭕'}
+                      </span>
+                      <span className={styles.taskTitle}>{task.title}</span>
+                    </label>
+                  ))
+                )}
+              </div>
             </div>
-          </div>
 
-          <div className={styles.modalActions}>
-            <button
-              type="button"
-              onClick={onClose}
-              className={styles.cancelButton}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className={styles.saveButton}
-            >
-              {mode === 'add' ? 'Add Milestone' : 'Save Changes'}
-            </button>
-          </div>
-        </form>
+            <div className={styles.modalActions}>
+              <button
+                type="button"
+                onClick={onClose}
+                className={styles.cancelButton}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className={styles.saveButton}
+              >
+                {mode === 'add' ? 'Add Milestone' : 'Save Changes'}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

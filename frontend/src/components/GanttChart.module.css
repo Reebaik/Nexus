@@ -2,60 +2,60 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #f8fafc;
-  border-radius: 12px;
-  padding: 20px;
+  padding: 0;
+  gap: 20px;
 }
 
 .chartHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .headerLeft {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
 }
 
 .headerLeft h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 1.1rem;
   font-weight: 600;
-  color: #1f2937;
+  color: #f1f5f9;
 }
 
 .viewControls {
   display: flex;
   gap: 4px;
-  background: #f3f4f6;
+  background: rgba(255, 255, 255, 0.05);
   padding: 4px;
-  border-radius: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .viewButton {
-  padding: 6px 12px;
+  padding: 6px 16px;
   border: none;
   background: transparent;
-  color: #6b7280;
-  font-size: 12px;
+  color: #94a3b8;
+  font-size: 0.85rem;
   font-weight: 500;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .viewButton:hover {
-  color: #374151;
+  color: #f1f5f9;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .viewButton.active {
-  background: white;
-  color: #1f2937;
+  background: rgba(255, 255, 255, 0.1);
+  color: #f1f5f9;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
@@ -72,366 +72,396 @@
   align-items: center;
   margin-left: 16px;
   padding-left: 16px;
-  border-left: 1px solid #e5e7eb;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .legendTitle {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
-  color: #374151;
+  color: #94a3b8;
   margin-right: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .legendItem {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: #6b7280;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: #cbd5e1;
 }
 
 .legendColor {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
 }
 
 .chartContainer {
   display: flex;
   flex: 1;
   overflow: hidden;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: white;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(10px);
+  min-height: 500px;
 }
 
 .taskList {
-  width: 300px;
-  border-right: 1px solid #e5e7eb;
-  background: #f9fafb;
+  width: 320px;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.taskListContent {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .taskHeader {
   display: grid;
-  grid-template-columns: 1fr 100px 80px;
+  grid-template-columns: 1fr 80px 60px;
   gap: 12px;
-  padding: 12px 16px;
-  background: #f3f4f6;
-  border-bottom: 1px solid #e5e7eb;
-  font-size: 12px;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 0.75rem;
   font-weight: 600;
-  color: #374151;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  height: 48px;
+  box-sizing: border-box;
+  align-items: center;
 }
 
 .taskRow,
 .milestoneRow {
   display: grid;
-  grid-template-columns: 1fr 100px 80px;
+  grid-template-columns: 1fr 80px 60px;
   gap: 12px;
-  padding: 12px 16px;
-  border-bottom: 1px solid #f3f4f6;
-  font-size: 12px;
+  padding: 0 20px;
+  height: 60px;
+  box-sizing: border-box;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  font-size: 0.85rem;
+  transition: background 0.2s;
+  align-items: center;
+}
+
+.timelineRow {
+  height: 60px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+  display: block; /* Ensure block level */
+}
+
+.taskRow:hover,
+.milestoneRow:hover {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .milestoneRow {
-  background: #faf5ff;
+  background: rgba(59, 130, 246, 0.05);
 }
 
 .taskInfo {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .taskId {
-  color: #9ca3af;
-  font-size: 10px;
+  color: #64748b;
+  font-size: 0.7rem;
   font-weight: 500;
 }
 
 .taskTitle {
-  color: #1f2937;
+  color: #f1f5f9;
   font-weight: 500;
-  line-height: 1.3;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .taskAssignee {
-  color: #6b7280;
-  font-size: 11px;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .taskDuration {
-  color: #6b7280;
-  font-size: 11px;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  text-align: right;
+  white-space: nowrap;
 }
 
 .timeline {
   flex: 1;
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
 }
 
 .dateHeader {
   display: flex;
-  height: 40px;
-  background: #f3f4f6;
-  border-bottom: 1px solid #e5e7eb;
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
 .dateColumn {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 0.75rem;
   font-weight: 500;
-  color: #6b7280;
-  border-right: 1px solid #e5e7eb;
+  color: #94a3b8;
+  border-right: 1px solid rgba(255, 255, 255, 0.03);
+  flex-shrink: 0;
+  padding: 0 4px;
+  box-sizing: border-box;
 }
 
 .dateColumn.today {
-  background: #eff6ff;
-  color: #1d4ed8;
+  background: rgba(59, 130, 246, 0.1);
+  color: #60a5fa;
   font-weight: 600;
 }
 
 .timelineGrid {
+  flex: 1;
   position: relative;
-  min-height: 400px;
-  background-image: repeating-linear-gradient(
-    90deg,
-    transparent,
-    transparent calc(100% / var(--column-count) - 1px),
-    #e5e7eb calc(100% / var(--column-count) - 1px),
-    #e5e7eb calc(100% / var(--column-count))
-  );
+  overflow: auto;
+  width: 100%;
 }
 
-.timelineRow {
-  height: 48px;
-  border-bottom: 1px solid #f3f4f6;
-  position: relative;
+/* Grid background for vertical lines */
+.gridBackground {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.gridColumn {
+  border-right: 1px solid rgba(255, 255, 255, 0.02);
+  height: 100%;
+  flex-shrink: 0;
+}
+
+.gridColumn.weekend {
+  background: rgba(255, 255, 255, 0.01);
 }
 
 .taskBar {
   position: absolute;
-  top: 8px;
-  height: 32px;
-  border-radius: 6px;
+  top: 18px; /* Centered in 60px row: (60-24)/2 = 18 */
+  height: 24px;
+  background: #3b82f6;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   display: flex;
   align-items: center;
   padding: 0 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  position: relative;
-}
-
-.taskBarBackground {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 6px;
-}
-
-.taskBarProgress {
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  border-radius: 6px 0 0 6px;
-  transition: width 0.3s ease;
+  white-space: nowrap;
+  z-index: 5;
+  min-width: 4px; /* Prevent disappearing */
 }
 
 .taskBar:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  filter: brightness(1.2);
+  z-index: 6;
 }
 
 .taskBarContent {
   display: flex;
-  flex-direction: row;
   align-items: center;
-  gap: 4px;
-  overflow: hidden;
-  padding: 0 4px;
-  min-height: 32px;
+  justify-content: space-between;
+  width: 100%;
+  gap: 12px; /* Increased gap */
 }
 
 .taskBarTitle {
   color: white;
-  font-size: 11px;
+  font-size: 0.75rem;
   font-weight: 500;
-  white-space: nowrap;
-  overflow: visible;
-  text-overflow: unset;
-  z-index: 2;
-  position: relative;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  overflow: hidden;
+  text-overflow: ellipsis;
   flex: 1;
-  min-width: 0;
 }
 
 .taskBarDuration {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 9px;
+  background: #f1f5f9; /* Light background for contrast */
+  color: #0f172a; /* Dark text */
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.65rem;
   font-weight: 600;
-  margin-left: auto;
-  background: rgba(0, 0, 0, 0.3);
-  padding: 2px 4px;
-  border-radius: 3px;
   white-space: nowrap;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
-.taskBarProgress {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 9px;
-  font-weight: 600;
-  margin-left: auto;
-  background: rgba(0, 0, 0, 0.3);
-  padding: 2px 4px;
-  border-radius: 3px;
-  z-index: 2;
-  position: relative;
+.taskBar.completed {
+  background: #10b981;
 }
 
-.taskBarDueDate {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 9px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.taskBarAssignee {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 9px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.taskBar.delayed {
+  background: #ef4444;
 }
 
 .milestoneMarker {
   position: absolute;
-  top: 16px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  top: 22px; /* Center in 60px row */
+  width: 16px;
+  height: 16px;
+  background: #f59e0b;
+  transform: rotate(45deg);
+  border: 2px solid rgba(30, 41, 59, 0.8);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  z-index: 6;
   cursor: pointer;
-  flex-direction: column;
 }
 
-.milestoneProgress {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 4px;
-}
-
-.milestoneProgressBar {
-  width: 40px;
-  height: 4px;
-  background: #e5e7eb;
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.milestoneProgressBar::after {
-  content: '';
-  display: block;
-  height: 100%;
-  background: #10b981;
-  border-radius: 2px;
-}
-
-.milestoneProgressText {
-  font-size: 9px;
-  color: #6b7280;
-  font-weight: 500;
+.milestoneMarker:hover {
+  transform: rotate(45deg) scale(1.2);
 }
 
 .milestoneDiamond {
-  width: 12px;
-  height: 12px;
-  background: #8b5cf6;
-  transform: rotate(45deg);
-  border-radius: 2px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  transition: background-color 0.3s ease;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0.8;
 }
 
 .milestoneLabel {
-  font-size: 10px;
-  color: #6b7280;
-  font-weight: 500;
+  position: absolute;
+  top: -28px; /* Moved up slightly */
+  left: 50%;
+  transform: translateX(-50%);
   white-space: nowrap;
+  background: rgba(15, 23, 42, 0.95);
+  color: #f1f5f9;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  z-index: 20;
 }
 
+.milestoneMarker:hover .milestoneLabel {
+  opacity: 1;
+}
+
+.milestoneProgress {
+  display: none;
+}
+
+.taskBarBackground {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.1);
+  z-index: -1;
+}
+
+.taskBarProgress {
+  height: 100%;
+  opacity: 0.3;
+}
+
+/* Modal styles */
 .taskModal {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   z-index: 1000;
 }
 
 .modalContent {
-  background: white;
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
-  width: 90%;
+  width: 100%;
   max-width: 500px;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
 }
 
 .modalHeader {
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid #e5e7eb;
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .modalHeader h3 {
   margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: #1f2937;
+  color: #f1f5f9;
+  font-size: 1.1rem;
 }
 
 .closeButton {
-  background: none;
+  background: transparent;
   border: none;
-  font-size: 24px;
-  color: #6b7280;
+  color: #94a3b8;
+  font-size: 1.5rem;
   cursor: pointer;
   padding: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  transition: background-color 0.2s ease;
+  line-height: 1;
 }
 
 .closeButton:hover {
-  background: #f3f4f6;
+  color: #f1f5f9;
 }
 
 .modalBody {
-  padding: 20px;
+  padding: 24px;
 }
 
 .taskDetails {
@@ -442,130 +472,17 @@
 
 .detailRow {
   display: flex;
-  align-items: flex-start;
   gap: 12px;
+  font-size: 0.9rem;
 }
 
 .label {
-  font-weight: 600;
-  color: #374151;
-  min-width: 120px;
-  font-size: 14px;
+  color: #94a3b8;
+  width: 100px;
+  flex-shrink: 0;
 }
 
 .status {
+  text-transform: capitalize;
   font-weight: 500;
-  font-size: 14px;
-}
-
-/* Responsive design */
-@media (max-width: 1200px) {
-  .taskList {
-    width: 250px;
-  }
-  
-  .taskHeader,
-  .taskRow,
-  .milestoneRow {
-    grid-template-columns: 1fr 80px 60px;
-  }
-}
-
-@media (max-width: 768px) {
-  .ganttChart {
-    padding: 12px;
-  }
-  
-  .chartHeader {
-    flex-direction: column;
-    gap: 16px;
-    align-items: flex-start;
-  }
-  
-  .taskList {
-    width: 200px;
-  }
-  
-  .taskHeader,
-  .taskRow,
-  .milestoneRow {
-    grid-template-columns: 1fr;
-    gap: 4px;
-  }
-  
-  .taskAssignee,
-  .taskDuration {
-    display: none;
-  }
-  
-  .modalContent {
-    width: 95%;
-    margin: 20px;
-  }
-}
-
-/* Scrollbar styling */
-.timeline::-webkit-scrollbar {
-  height: 8px;
-}
-
-.timeline::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
-}
-
-.timeline::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 4px;
-}
-
-.timeline::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
-
-/* Grid lines for better readability */
-.timelineRow::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: repeating-linear-gradient(
-    90deg,
-    transparent,
-    transparent calc(100% / var(--column-count) - 1px),
-    #e5e7eb calc(100% / var(--column-count) - 1px),
-    #e5e7eb calc(100% / var(--column-count))
-  );
-  pointer-events: none;
-}
-
-/* Dependency lines (for future implementation) */
-.dependencyLine {
-  position: absolute;
-  background: #6b7280;
-  height: 1px;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.dependencyLine::before,
-.dependencyLine::after {
-  content: '';
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  background: #6b7280;
-  border-radius: 50%;
-}
-
-.dependencyLine::before {
-  left: -3px;
-  top: -2.5px;
-}
-
-.dependencyLine::after {
-  right: -3px;
-  top: -2.5px;
 }

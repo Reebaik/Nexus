@@ -1,21 +1,11 @@
 import React, { useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import styles from '../styles/ProjectOverviewPage.module.css';
 import chartStyles from '../styles/TrackingCharts.module.css';
 import type { ProjectOutletContext } from './ProjectLayout';
 
-type GitHubActivityItem = {
-  type: 'push' | 'pull_request';
-  actor?: string;
-  action?: string;
-  ref?: string;
-  prNumber?: number;
-  merged?: boolean;
-  commitCount?: number;
-  commits?: Array<{ sha?: string; message?: string }>;
-  date?: string | Date;
-};
+
 
 interface Task {
   id: string;
@@ -40,42 +30,6 @@ interface Task {
 const ProjectTrackingPage: React.FC = () => {
   const { project } = useOutletContext<ProjectOutletContext>();
   const tasks = (project.tasks ?? []) as Task[];
-  const [ghLoading, setGhLoading] = React.useState(false);
-  const [ghRepo, setGhRepo] = React.useState<{ repoOwner?: string; repoName?: string } | null>(null);
-  const [ghActivity, setGhActivity] = React.useState<GitHubActivityItem[]>([]);
-
-  React.useEffect(() => {
-    const run = async () => {
-      try {
-        setGhLoading(true);
-        const token = localStorage.getItem('nexus_jwt') || '';
-        const res = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/projects/${project._id}/github/activity`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (res.ok) {
-          const data = await res.json();
-          setGhRepo(data.repo || null);
-          setGhActivity(Array.isArray(data.activity) ? data.activity : []);
-        } else {
-          setGhRepo(null);
-          setGhActivity([]);
-        }
-      } catch {
-        setGhRepo(null);
-        setGhActivity([]);
-      } finally {
-        setGhLoading(false);
-      }
-    };
-    if (project?._id) run();
-  }, [project?._id]);
-
-  const getTaskMembers = (task: Task): string[] => {
-    if (Array.isArray(task.taskMembers) && task.taskMembers.length > 0) return task.taskMembers;
-    if (Array.isArray(task.teamMembers) && task.teamMembers.length > 0) return task.teamMembers;
-    return [];
-  };
 
   // Add useEffect to ensure real-time updates when project data changes
   React.useEffect(() => {
@@ -174,8 +128,6 @@ const ProjectTrackingPage: React.FC = () => {
     return data;
   }, [tasks, project.startDate, (project as any).targetEndDate]);
 
-  const burndownChartWidth = Math.max(1000, burndownData.length * 0);
-
   // Calculate task distribution by status
   const tasksByStatus = useMemo(() => ({
     todo: tasks.filter(t => t.status === 'todo').length,
@@ -185,49 +137,21 @@ const ProjectTrackingPage: React.FC = () => {
     done: tasks.filter(t => t.status === 'done').length
   }), [tasks]);
 
-  // Enhanced Workload Distribution - Active Tasks Only
-  const workloadDistribution = useMemo(() => {
-    // Get all team members from project
-    const allTeamMembers = project.teamMembers || [];
-    
-    // Calculate workload for each team member based on active tasks only
-    const workloadData = allTeamMembers.reduce<Record<string, { activeTasks: number; totalTasks: number }>>((acc, member) => {
-      const memberTasks = tasks.filter(task => {
-        const members = getTaskMembers(task);
-        return members.includes(member);
-      });
 
-      const activeTasks = memberTasks.filter(task => task.status !== 'done').length;
-      const totalTasks = memberTasks.length;
-      
-      acc[member] = {
-        activeTasks,
-        totalTasks
-      };
-      
-      return acc;
-    }, {});
-    
-    // Convert to chart format and sort by active tasks (descending)
-    return Object.entries(workloadData)
-      .map(([name, data]) => ({
-        name,
-        activeTasks: data.activeTasks,
-        totalTasks: data.totalTasks,
-        completionRate: data.totalTasks > 0 ? Math.round((data.totalTasks - data.activeTasks) / data.totalTasks * 100) : 0
-      }))
-      .sort((a, b) => b.activeTasks - a.activeTasks);
-  }, [tasks, project.teamMembers]);
-  
-  // Define overload threshold (e.g., more than 5 active tasks)
-  const OVERLOAD_THRESHOLD = 5;
 
   return (
-    <section className={chartStyles.trackingContainer}>
-          <h1>Tracking & Control</h1>
-          <p className={styles.lead}>
-            Measure progress, track time, and identify risk early.
-          </p>
+    <>
+      <div className={styles.bgWrapper}>
+        <div className={styles.bgGradient} />
+        <div className={styles.gridOverlay} />
+      </div>
+      <section className={chartStyles.trackingContainer}>
+          <div className={styles.overviewHeader}>
+            <h1>Tracking & Control</h1>
+            <p className={styles.lead}>
+              Measure progress, track time, and identify risk early.
+            </p>
+          </div>
 
           {/* 1) Burndown Chart with Recharts */}
           <div className={`${chartStyles.chartBlock} ${chartStyles.burndownChart}`}>
@@ -235,38 +159,38 @@ const ProjectTrackingPage: React.FC = () => {
               <h2 className={chartStyles.chartTitle}>Burndown Chart</h2>
               <p className={chartStyles.chartSubtitle}>Track progress vs ideal timeline</p>
             </div>
-            <div style={{ width: '100%', overflowX: 'auto' }}>
-              <div style={{ width: burndownChartWidth, height: 320 }}>
-                <ResponsiveContainer width="100%" height="100%">
+            <div style={{ width: '100%', height: 320 }}>
+              <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={burndownData} margin={{ top: 16, right: 24, left: 40, bottom: 32 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                   <XAxis 
                     dataKey="date" 
-                    tick={{ fontSize: 12 }}
-                    stroke="#64748b"
+                    tick={{ fontSize: 12, fill: '#94a3b8' }}
+                    stroke="#94a3b8"
                   />
                   <YAxis 
-                    label={{ value: 'Tasks', angle: -90, position: 'insideLeft' }}
-                    tick={{ fontSize: 12 }}
-                    stroke="#64748b"
+                    label={{ value: 'Tasks', angle: -90, position: 'insideLeft', fill: '#94a3b8' }}
+                    tick={{ fontSize: 12, fill: '#94a3b8' }}
+                    stroke="#94a3b8"
                   />
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: '#fff',
-                      border: '1px solid #e2e8f0',
+                      backgroundColor: '#1e293b',
+                      border: '1px solid rgba(255,255,255,0.1)',
                       borderRadius: '8px',
-                      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+                      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3)',
+                      color: '#f1f5f9'
                     }}
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
                         const point = payload[0].payload as any;
                         return (
-                          <div style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '12px', borderRadius: '8px' }}>
-                            <p style={{ margin: '0 0 8px 0' }}><strong>Day {point.dayIndex} - {point.date}</strong></p>
+                          <div style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', padding: '12px', borderRadius: '8px', color: '#f1f5f9' }}>
+                            <p style={{ margin: '0 0 8px 0', color: '#f1f5f9' }}><strong>Day {point.dayIndex} - {point.date}</strong></p>
                             <p style={{ margin: '4px 0', color: '#10b981' }}>✅ Completed Tasks: {point.completed}</p>
                             <p style={{ margin: '4px 0', color: '#3b82f6' }}>📊 Remaining Tasks: {point.remaining}</p>
-                            <p style={{ margin: '4px 0', color: '#64748b' }}>🎯 Ideal Remaining: {point.ideal}</p>
-                            <p style={{ margin: '4px 0', color: '#10b981', borderTop: '1px solid #e2e8f0', paddingTop: '4px' }}>📈 Total Tasks: {point.totalWork}</p>
+                            <p style={{ margin: '4px 0', color: '#94a3b8' }}>🎯 Ideal Remaining: {point.ideal}</p>
+                            <p style={{ margin: '4px 0', color: '#10b981', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '4px' }}>📈 Total Tasks: {point.totalWork}</p>
                           </div>
                         );
                       }
@@ -276,9 +200,10 @@ const ProjectTrackingPage: React.FC = () => {
                   <Legend 
                     wrapperStyle={{
                       paddingTop: '20px',
-                      backgroundColor: '#f8fafc',
+                      backgroundColor: 'rgba(255,255,255,0.05)',
                       borderRadius: '8px',
-                      border: '1px solid #e2e8f0'
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      color: '#f1f5f9'
                     }}
                   />
                   <Line 
@@ -318,7 +243,6 @@ const ProjectTrackingPage: React.FC = () => {
                   />
                 </LineChart>
               </ResponsiveContainer>
-              </div>
             </div>
             <div className={chartStyles.metricsGrid}>
               <div className={chartStyles.metricCard}>
@@ -435,220 +359,9 @@ const ProjectTrackingPage: React.FC = () => {
             </div>
           </div>
 
-          {/* 3) Schedule Health Indicators */}
-          <div className={chartStyles.chartBlock}>
-            <div className={chartStyles.chartHeader}>
-              <h2 className={chartStyles.chartTitle}>Schedule Health</h2>
-              <p className={chartStyles.chartSubtitle}>Identify risks and bottlenecks early</p>
-            </div>
 
-            {(() => {
-              const overdueCount = tasks.filter((t) => {
-                const due = toDate((t.endDate as any) || t.dueDate);
-                return Boolean(due) && startOfDay(due as Date).getTime() < startOfDay(today).getTime() && t.status !== 'done';
-              }).length;
-
-              const dueThisWeekCount = tasks.filter((t) => {
-                const due = toDate((t.endDate as any) || t.dueDate);
-                if (!due) return false;
-                const d = startOfDay(due);
-                const start = startOfDay(today);
-                const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7);
-                return d.getTime() >= start.getTime() && d.getTime() <= end.getTime() && t.status !== 'done';
-              }).length;
-
-              const blockedCount = tasks.filter((t) => {
-                if (!t.dependencies || t.dependencies.length === 0) return false;
-                return t.dependencies.some((depId) => {
-                  const dep = tasks.find((x) => x.id === depId);
-                  return dep ? dep.status !== 'done' : false;
-                });
-              }).length;
-
-              return (
-                <div className={chartStyles.healthGrid}>
-                  <div className={chartStyles.healthCard}>
-                    <div className={`${chartStyles.healthIcon} ${chartStyles.overdue}`}>🚨</div>
-                    <div className={chartStyles.healthContent}>
-                      <div className={chartStyles.healthValue}>{overdueCount}</div>
-                      <div className={chartStyles.healthLabel}>Tasks Overdue</div>
-                    </div>
-                  </div>
-                  <div className={chartStyles.healthCard}>
-                    <div className={`${chartStyles.healthIcon} ${chartStyles.dueSoon}`}>⏰</div>
-                    <div className={chartStyles.healthContent}>
-                      <div className={chartStyles.healthValue}>{dueThisWeekCount}</div>
-                      <div className={chartStyles.healthLabel}>Due This Week</div>
-                    </div>
-                  </div>
-                  <div className={chartStyles.healthCard}>
-                    <div className={`${chartStyles.healthIcon} ${chartStyles.blocked}`}>🚫</div>
-                    <div className={chartStyles.healthContent}>
-                      <div className={chartStyles.healthValue}>{blockedCount}</div>
-                      <div className={chartStyles.healthLabel}>Tasks Blocked</div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
-          </div>
-
-          {/* 4) Enhanced Workload Distribution Chart */}
-          <div className={`${chartStyles.chartBlock} ${chartStyles.workloadChart}`}>
-            <div className={chartStyles.chartHeader}>
-              <h2 className={chartStyles.chartTitle}>Workload Distribution</h2>
-              <p className={chartStyles.chartSubtitle}>Active tasks per team member (excluding completed tasks)</p>
-            </div>
-            <div style={{ width: '100%', height: Math.max(260, workloadDistribution.length * 40), maxWidth: '900px', margin: '0 auto' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={workloadDistribution}
-                  layout="vertical"
-                  margin={{ top: 20, right: 30, left: 80, bottom: 20 }}
-                  barCategoryGap={8}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis
-                    type="number"
-                    tick={{ fontSize: 12 }}
-                    stroke="#64748b"
-                    label={{ value: 'Active Tasks', position: 'insideBottomRight', offset: -10 }}
-                  />
-                  <YAxis
-                    type="category"
-                    dataKey="name"
-                    tick={{ fontSize: 12 }}
-                    stroke="#64748b"
-                    width={80}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#fff',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-                    }}
-                    content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        const isOverloaded = payload[0].payload.activeTasks > OVERLOAD_THRESHOLD;
-                        return (
-                          <div style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '12px', borderRadius: '8px' }}>
-                            <p style={{ margin: '0 0 8px 0' }}><strong>{payload[0].name}</strong></p>
-                            <p style={{ margin: '4px 0', color: '#6b7280' }}>📋 Active Tasks: {payload[0].payload.activeTasks}</p>
-                            <p style={{ margin: '4px 0', color: '#6b7280' }}>📊 Total Tasks: {payload[0].payload.totalTasks}</p>
-                            <p style={{ margin: '4px 0', color: '#6b7280' }}>✅ Completion Rate: {payload[0].payload.completionRate}%</p>
-                            {isOverloaded && (
-                              <p style={{ margin: '8px 0 0 0', color: '#ef4444', fontWeight: 'bold' }}>⚠️ Overloaded (&gt;{OVERLOAD_THRESHOLD} tasks)</p>
-                            )}
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                  <Legend 
-                    wrapperStyle={{
-                      paddingTop: '10px'
-                    }}
-                  />
-                  <Bar 
-                    dataKey="activeTasks" 
-                    fill="#3b82f6" 
-                    name="Active Tasks"
-                    radius={[0, 4, 4, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-            
-            {/* Workload Summary Metrics */}
-            <div className={chartStyles.metricsGrid}>
-              <div className={chartStyles.metricCard}>
-                <div className={chartStyles.metricValue}>
-                  {workloadDistribution.filter(w => w.activeTasks > OVERLOAD_THRESHOLD).length}
-                </div>
-                <div className={chartStyles.metricLabel}>Overloaded Members</div>
-              </div>
-              <div className={chartStyles.metricCard}>
-                <div className={chartStyles.metricValue}>
-                  {Math.round(workloadDistribution.reduce((sum, w) => sum + w.activeTasks, 0) / Math.max(1, workloadDistribution.length))}
-                </div>
-                <div className={chartStyles.metricLabel}>Avg. Active Tasks</div>
-              </div>
-              <div className={chartStyles.metricCard}>
-                <div className={chartStyles.metricValue}>
-                  {Math.max(0, ...workloadDistribution.map(w => w.activeTasks))}
-                </div>
-                <div className={chartStyles.metricLabel}>Max. Active Tasks</div>
-              </div>
-              <div className={chartStyles.metricCard}>
-                <div className={chartStyles.metricValue}>
-                  {workloadDistribution.length}
-                </div>
-                <div className={chartStyles.metricLabel}>Team Members</div>
-              </div>
-            </div>
-          </div>
-
-          <div className={chartStyles.chartBlock}>
-            <div className={chartStyles.chartHeader}>
-              <h2 className={chartStyles.chartTitle}>GitHub Activity</h2>
-              <p className={chartStyles.chartSubtitle}>Recent commits and pull requests</p>
-            </div>
-            {ghLoading ? (
-              <p style={{ padding: 12 }}>Loading…</p>
-            ) : ghActivity.length === 0 ? (
-              <p style={{ padding: 12 }}>No recent activity.</p>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {ghRepo?.repoOwner && ghRepo?.repoName && (
-                  <p style={{ opacity: 0.9 }}>
-                    <a href={`https://github.com/${ghRepo.repoOwner}/${ghRepo.repoName}`} target="_blank" rel="noreferrer">
-                      {ghRepo.repoOwner}/{ghRepo.repoName}
-                    </a>
-                  </p>
-                )}
-                {ghActivity.map((item, idx) => (
-                  <div key={idx} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '12px 0', borderBottom: '1px solid rgba(0,0,0,0.1)' }}>
-                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
-                      {item.type === 'push' ? '⬆️' : '🔀'}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      {item.type === 'push' ? (
-                        <div>
-                          <div style={{ fontSize: 14 }}>
-                            <strong>{item.actor || 'Someone'}</strong> pushed {item.commitCount || 0} commit{(item.commitCount || 0) === 1 ? '' : 's'} {item.ref ? `to ${item.ref}` : ''}
-                          </div>
-                          {item.commits && item.commits.length > 0 && (
-                            <ul style={{ marginTop: 6, paddingLeft: 18 }}>
-                              {item.commits.slice(0, 3).map((c, i) => (
-                                <li key={i} style={{ fontSize: 13, opacity: 0.9 }}>
-                                  {(c.sha || '').slice(0, 7)} — {c.message}
-                                </li>
-                              ))}
-                              {item.commits.length > 3 && (
-                                <li style={{ fontSize: 13, opacity: 0.7 }}>
-                                  …and {item.commits.length - 3} more
-                                </li>
-                              )}
-                            </ul>
-                          )}
-                        </div>
-                      ) : (
-                        <div style={{ fontSize: 14 }}>
-                          <strong>{item.actor || 'Someone'}</strong> {item.action || 'updated'} PR #{item.prNumber} {item.merged ? '(merged)' : ''} {item.ref ? `on ${item.ref}` : ''}
-                        </div>
-                      )}
-                      <div style={{ fontSize: 12, opacity: 0.7, marginTop: 4 }}>
-                        {item.date ? new Date(item.date).toLocaleString() : ''}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
     </section>
+    </>
   );
 };
 

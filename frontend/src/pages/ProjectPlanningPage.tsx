@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { TextField } from '@mui/material';
+import { DatePicker, ConfigProvider, theme } from 'antd';
+import dayjs from 'dayjs';
 import styles from '../styles/ProjectPlanningPage.module.css';
-import styles2 from '../styles/ProjectOverviewPage.module.css';
 import KanbanBoard from '../components/KanbanBoard';
 import GanttChart from '../components/GanttChart';
 import MilestoneModal from '../components/MilestoneModal';
@@ -663,8 +663,14 @@ const ProjectPlanningPage: React.FC = () => {
   };
 
   return (
-    <section>
-      <div className={styles.planningHeader}>
+    <>
+      <div className={styles.bgWrapper}>
+        <div className={styles.bgGradient} />
+        <div className={styles.gridOverlay} />
+      </div>
+
+      <section className={styles.planningContainer}>
+        <div className={styles.planningHeader}>
         <div>
           <h1>Planning</h1>
           <p className={styles.lead}>Visualize how work connects before it starts.</p>
@@ -773,15 +779,29 @@ const ProjectPlanningPage: React.FC = () => {
                     </div>
                     {milestoneTasks.length > 0 && (
                       <div className={`${styles.linkedTasks} ${expandedMilestones.has(milestone.id) ? styles.expanded : styles.collapsed}`}>
-                        <h4>Linked Tasks:</h4>
-                        {milestoneTasks.map(task => (
-                          <div key={task.id} className={styles.taskItem}>
-                            <span className={`${styles.statusIndicator} ${styles[task.status]}`}>
-                              {task.status === 'done' ? '✅' : task.status === 'in-progress' ? '🔄' : task.status === 'blocked' ? '🚫' : '⭕'}
-                            </span>
-                            <span>{task.title}</span>
-                          </div>
-                        ))}
+                        <h4>Linked Tasks ({milestoneTasks.length})</h4>
+                        <div className={styles.taskGrid}>
+                          {milestoneTasks.map(task => (
+                            <div key={task.id} className={`${styles.taskMiniBox} ${styles[task.status]}`}>
+                              <div className={styles.taskMiniBoxHeader}>
+                                <span className={styles.taskMiniBoxTitle} title={task.title}>{task.title}</span>
+                                <span className={styles.taskMiniBoxStatus}>
+                                  {task.status === 'done' ? '✅ Done' : 
+                                   task.status === 'in-progress' ? '🔄 In Progress' : 
+                                   task.status === 'blocked' ? '🚫 Blocked' : 
+                                   task.status === 'review' ? '👀 Review' : '⭕ To Do'}
+                                </span>
+                              </div>
+                              {task.priority && (
+                                <div className={styles.taskMiniBoxMeta}>
+                                  <span className={`${styles.priorityIndicator} ${styles[task.priority]}`}>
+                                    {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)} Priority
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -806,49 +826,55 @@ const ProjectPlanningPage: React.FC = () => {
 
       {/* Task Modal */}
       {taskModalState.isOpen && (
-        <div className={styles2.modalOverlay}>
-          <div className={styles2.modal}>
-            <div className={styles2.modalHeader}>
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <div className={styles.modalHeader}>
               <h2>
                 {taskModalState.mode === 'add' ? 'Add' : 'Edit'} Task
               </h2>
-              <button onClick={closeTaskModal} className={styles2.closeButton}>×</button>
+              <button onClick={closeTaskModal} className={styles.closeButton}>×</button>
             </div>
-            <div className={styles2.modalContent}>
-              <form onSubmit={handleSaveTask}>
-                <div className={styles2.formGroup}>
-                  <label>Task Title</label>
+            <div className={styles.modalContent}>
+              <form onSubmit={handleSaveTask} className={styles.modalForm}>
+                <div className={styles.formGroup}>
+                  <label>Task Title *</label>
                   <input 
                     type="text" 
                     name="title"
                     defaultValue={taskModalState.editingTask?.title || ''}
                     required
+                    className={styles.formInput}
+                    placeholder="Enter task title"
                   />
                 </div>
-                <div className={styles2.formGroup}>
+                <div className={styles.formGroup}>
                   <label>Description</label>
                   <textarea 
                     name="description"
                     defaultValue={taskModalState.editingTask?.description || ''}
                     rows={3}
+                    className={styles.formTextarea}
+                    placeholder="Describe the task..."
                   />
                 </div>
-                <div className={styles2.formGroup}>
+                <div className={styles.formGroup}>
                   <label>Priority</label>
                   <select 
                     name="priority"
                     defaultValue={taskModalState.editingTask?.priority || 'medium'}
+                    className={styles.formSelect}
                   >
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
                     <option value="high">High</option>
                   </select>
                 </div>
-                <div className={styles2.formGroup}>
+                <div className={styles.formGroup}>
                   <label>Status</label>
                   <select 
                     name="status"
                     defaultValue={taskModalState.editingTask?.status || 'todo'}
+                    className={styles.formSelect}
                   >
                     <option value="todo">To Do</option>
                     <option value="in-progress">In Progress</option>
@@ -857,31 +883,31 @@ const ProjectPlanningPage: React.FC = () => {
                     <option value="done">Done</option>
                   </select>
                 </div>
-                <div className={styles2.formGroup}>
+                <div className={styles.formGroup}>
                   <label>Task Team Members</label>
-                  <div className={styles2.assigneeInput}>
+                  <div className={styles.assigneeInput}>
                     <input 
                       type="text"
                       value={assigneeSearchQuery}
                       onChange={(e) => setAssigneeSearchQuery(e.target.value)}
                       onFocus={() => setShowAssigneeDropdown(true)}
                       placeholder="Add team members..."
-                      className={styles2.assigneeSearchInput}
+                      className={styles.assigneeSearchInput}
                     />
                     {showAssigneeDropdown && (
-                      <div className={styles2.assigneeDropdown}>
+                      <div className={styles.assigneeDropdown}>
                         {filteredMembers.length > 0 ? (
                           filteredMembers.map((member, index) => (
                             <div
                               key={index}
-                              className={styles2.assigneeOption}
+                              className={styles.assigneeOption}
                               onMouseDown={() => handleAddTeamMember(member)}
                             >
                               {member}
                             </div>
                           ))
                         ) : (
-                          <div className={styles2.noMembers}>
+                          <div className={styles.noMembers}>
                             {project?.teamMembers?.length === 0 ? "No team members" : "No matching members"}
                           </div>
                         )}
@@ -890,13 +916,13 @@ const ProjectPlanningPage: React.FC = () => {
                   </div>
                   
                   {/* Task Members Display */}
-                  <div className={styles2.taskMembersList}>
+                  <div className={styles.taskMembersList}>
                     {taskModalState.editingTask?.taskMembers?.map((member: string, index: number) => (
-                      <div key={index} className={styles2.memberChip}>
+                      <div key={index} className={styles.memberChip}>
                         <span>{member}</span>
                         <button
                           type="button"
-                          className={styles2.removeMember}
+                          className={styles.removeMember}
                           onClick={() => handleRemoveTeamMember(member)}
                         >
                           ×
@@ -904,28 +930,28 @@ const ProjectPlanningPage: React.FC = () => {
                       </div>
                     ))}
                     {(!taskModalState.editingTask?.taskMembers || taskModalState.editingTask.taskMembers.length === 0) && (
-                      <div className={styles2.noMembers}>No team members assigned</div>
+                      <div className={styles.noMembers}>No team members assigned</div>
                     )}
                   </div>
                 </div>
-                <div className={styles2.formGroup}>
+                <div className={styles.formGroup}>
                   <label>Requirement</label>
-                  <div className={styles2.assigneeInput}>
+                  <div className={styles.assigneeInput}>
                     <input 
                       type="text"
                       value={requirementSearchQuery}
                       onChange={(e) => setRequirementSearchQuery(e.target.value)}
                       onFocus={() => setShowRequirementDropdown(true)}
                       placeholder="Assign to requirement..."
-                      className={styles2.assigneeSearchInput}
+                      className={styles.assigneeSearchInput}
                     />
                     {showRequirementDropdown && (
-                      <div className={styles2.assigneeDropdown}>
+                      <div className={styles.assigneeDropdown}>
                         {filteredRequirements.length > 0 ? (
                           filteredRequirements.map((requirement, index) => (
                             <div
                               key={index}
-                              className={styles2.memberOption}
+                              className={styles.memberOption}
                               onClick={() => {
                                 setTaskModalState({
                                   ...taskModalState,
@@ -945,7 +971,7 @@ const ProjectPlanningPage: React.FC = () => {
                             </div>
                           ))
                         ) : (
-                          <div className={styles2.noMembers}>
+                          <div className={styles.noMembers}>
                             {requirementSearchQuery ? "No matching requirements" : "Type to search requirements..."}
                           </div>
                         )}
@@ -953,8 +979,8 @@ const ProjectPlanningPage: React.FC = () => {
                     )}
                   </div>
                   {taskModalState.editingTask?.linkedRequirement && (
-                    <div className={styles2.selectedMembers}>
-                      <span className={styles2.memberTag}>
+                    <div className={styles.selectedMembers}>
+                      <span className={styles.memberTag}>
                         {taskModalState.editingTask.linkedRequirement.type === 'functional' 
                           ? (project?.functionalRequirements?.find(req => req.id === taskModalState.editingTask?.linkedRequirement?.id)?.title || 'Unknown')
                           : (project?.nonFunctionalRequirements?.find(req => req.id === taskModalState.editingTask?.linkedRequirement?.id)?.title || 'Unknown')
@@ -971,7 +997,7 @@ const ProjectPlanningPage: React.FC = () => {
                             });
                             setRequirementSearchQuery('');
                           }}
-                          className={styles2.removeMember}
+                          className={styles.removeMember}
                         >
                           ×
                         </button>
@@ -979,77 +1005,97 @@ const ProjectPlanningPage: React.FC = () => {
                     </div>
                   )}
                 </div>
-                <div className={styles2.formGroup}>
-                  <TextField
-                    fullWidth
-                    label="Start Date"
-                    type="date"
-                    value={taskModalState.editingTask?.startDate ? 
-                      (typeof taskModalState.editingTask.startDate === 'string' ? 
-                        taskModalState.editingTask.startDate.split('T')[0] : 
-                        new Date(taskModalState.editingTask.startDate).toISOString().split('T')[0]
-                      ) : ''}
-                    onChange={(e) => {
-                      if (taskModalState.editingTask) {
-                        setTaskModalState({
-                          ...taskModalState,
-                          editingTask: {
-                            ...taskModalState.editingTask,
-                            startDate: e.target.value
+                <div className={styles.formGroup}>
+                  <label>Start Date</label>
+                  <div className={styles.dateInputContainer}>
+                    <ConfigProvider
+                      theme={{
+                        algorithm: theme.darkAlgorithm,
+                        token: {
+                          colorBgContainer: 'rgba(255, 255, 255, 0.05)',
+                          colorBorder: 'rgba(255, 255, 255, 0.2)',
+                          colorText: '#fff',
+                          colorTextPlaceholder: 'rgba(255, 255, 255, 0.4)',
+                        }
+                      }}
+                    >
+                      <DatePicker
+                        className={styles.formInput}
+                        value={taskModalState.editingTask?.startDate ? dayjs(taskModalState.editingTask.startDate) : null}
+                        onChange={(date) => {
+                          if (taskModalState.editingTask) {
+                            setTaskModalState({
+                              ...taskModalState,
+                              editingTask: {
+                                ...taskModalState.editingTask,
+                                startDate: date ? date.format('YYYY-MM-DD') : ''
+                              }
+                            });
                           }
-                        });
-                      }
-                    }}
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{
-                      style: { cursor: 'pointer', backgroundColor: '#ffffff', color: '#111827' }
-                    }}
-                    sx={{
-                      '& input[type="date"]::-webkit-calendar-picker-indicator': {
-                        cursor: 'pointer',
-                        opacity: 1,
-                        filter: 'invert(0.5)'
-                      }
-                    }}
-                  />
+                        }}
+                        style={{ 
+                          width: '100%', 
+                          padding: '14px 18px', 
+                          background: 'rgba(255, 255, 255, 0.05)', 
+                          border: '1px solid rgba(255, 255, 255, 0.2)', 
+                          color: '#fff', 
+                          height: '48px'
+                        }}
+                        format="YYYY-MM-DD"
+                        placeholder="Select start date"
+                        allowClear={false}
+                        suffixIcon={<span style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '1.2rem' }}>📅</span>}
+                      />
+                    </ConfigProvider>
+                  </div>
                 </div>
-                <div className={styles2.formGroup}>
-                  <TextField
-                    fullWidth
-                    label="End Date"
-                    type="date"
-                    value={taskModalState.editingTask?.endDate ? 
-                      (typeof taskModalState.editingTask.endDate === 'string' ? 
-                        taskModalState.editingTask.endDate.split('T')[0] : 
-                        new Date(taskModalState.editingTask.endDate).toISOString().split('T')[0]
-                      ) : ''}
-                    onChange={(e) => {
-                      if (taskModalState.editingTask) {
-                        setTaskModalState({
-                          ...taskModalState,
-                          editingTask: {
-                            ...taskModalState.editingTask,
-                            endDate: e.target.value
+                <div className={styles.formGroup}>
+                  <label>End Date</label>
+                  <div className={styles.dateInputContainer}>
+                    <ConfigProvider
+                      theme={{
+                        algorithm: theme.darkAlgorithm,
+                        token: {
+                          colorBgContainer: 'rgba(255, 255, 255, 0.05)',
+                          colorBorder: 'rgba(255, 255, 255, 0.2)',
+                          colorText: '#fff',
+                          colorTextPlaceholder: 'rgba(255, 255, 255, 0.4)',
+                        }
+                      }}
+                    >
+                      <DatePicker
+                        className={styles.formInput}
+                        value={taskModalState.editingTask?.endDate ? dayjs(taskModalState.editingTask.endDate) : null}
+                        onChange={(date) => {
+                          if (taskModalState.editingTask) {
+                            setTaskModalState({
+                              ...taskModalState,
+                              editingTask: {
+                                ...taskModalState.editingTask,
+                                endDate: date ? date.format('YYYY-MM-DD') : ''
+                              }
+                            });
                           }
-                        });
-                      }
-                    }}
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{
-                      style: { cursor: 'pointer', backgroundColor: '#ffffff', color: '#111827' }
-                    }}
-                    sx={{
-                      '& input[type="date"]::-webkit-calendar-picker-indicator': {
-                        cursor: 'pointer',
-                        opacity: 1,
-                        filter: 'invert(0.5)'
-                      }
-                    }}
-                  />
+                        }}
+                        style={{ 
+                          width: '100%', 
+                          padding: '14px 18px', 
+                          background: 'rgba(255, 255, 255, 0.05)', 
+                          border: '1px solid rgba(255, 255, 255, 0.2)', 
+                          color: '#fff', 
+                          height: '48px'
+                        }}
+                        format="YYYY-MM-DD"
+                        placeholder="Select end date"
+                        allowClear={false}
+                        suffixIcon={<span style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '1.2rem' }}>📅</span>}
+                      />
+                    </ConfigProvider>
+                  </div>
                 </div>
-                <div className={styles2.formActions}>
-                  <button type="button" onClick={closeTaskModal}>Cancel</button>
-                  <button type="submit">Save</button>
+                <div className={styles.modalActions}>
+                  <button type="button" onClick={closeTaskModal} className={styles.cancelButton}>Cancel</button>
+                  <button type="submit" className={styles.saveButton}>Save</button>
                 </div>
               </form>
             </div>
@@ -1065,6 +1111,7 @@ const ProjectPlanningPage: React.FC = () => {
         mode={milestoneModalState.mode}
       />
     </section>
+    </>
   );
 };
 

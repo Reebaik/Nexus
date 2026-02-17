@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import styles from '../styles/LoginPage.module.css';
-import { TextField, Button, Paper, FormControlLabel, Switch } from '@mui/material';
+import styles from '../styles/CreateProjectPage.module.css';
 import { motion } from 'framer-motion';
-import Tilt from 'react-parallax-tilt';
 import RequirementModal from '../components/RequirementModal';
+import { DatePicker, ConfigProvider, theme } from 'antd';
+import dayjs from 'dayjs';
 
 interface FunctionalRequirement {
   id: string;
@@ -37,10 +37,6 @@ const CreateProjectPage: React.FC = () => {
   const [success, setSuccess] = useState('');
   const [functionalRequirements, setFunctionalRequirements] = useState<FunctionalRequirement[]>([]);
   const [nonFunctionalRequirements, setNonFunctionalRequirements] = useState<NonFunctionalRequirement[]>([]);
-  const [repoOwner, setRepoOwner] = useState('');
-  const [repoName, setRepoName] = useState('');
-  const [installationId, setInstallationId] = useState('');
-  const [repoEnabled, setRepoEnabled] = useState(false);
   const [modalState, setModalState] = useState({
     isOpen: false,
     type: 'functional' as 'functional' | 'non-functional',
@@ -163,14 +159,6 @@ const CreateProjectPage: React.FC = () => {
       setError('Please fill all required fields');
       return;
     }
-    if (repoEnabled) {
-      const hasOwner = repoOwner && repoOwner.trim().length > 0;
-      const hasName = repoName && repoName.trim().length > 0;
-      if (hasOwner !== hasName) {
-        setError('Please provide both GitHub repo owner and repo name, or leave both empty.');
-        return;
-      }
-    }
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/projects`, {
         method: 'POST',
@@ -178,28 +166,16 @@ const CreateProjectPage: React.FC = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('nexus_jwt')}`,
         },
-        body: JSON.stringify((() => {
-          const payload: any = {
-            name,
-            objective,
-            description,
-            startDate,
-            targetEndDate,
-            teamMembers,
-            functionalRequirements,
-            nonFunctionalRequirements
-          };
-          if (repoEnabled) {
-            const github: any = {};
-            if (repoOwner) github.repoOwner = repoOwner.trim();
-            if (repoName) github.repoName = repoName.trim();
-            if (installationId) github.installationId = installationId.trim();
-            if (github.repoOwner && github.repoName) {
-              payload.github = github;
-            }
-          }
-          return payload;
-        })())
+        body: JSON.stringify({
+          name,
+          objective,
+          description,
+          startDate,
+          targetEndDate,
+          teamMembers,
+          functionalRequirements,
+          nonFunctionalRequirements
+        })
       });
       const data = await res.json();
       if (!res.ok) setError(data.message || 'Failed to create project');
@@ -216,450 +192,305 @@ const CreateProjectPage: React.FC = () => {
   };
 
   return (
-    <div className={styles.pageWrapper} style={{ background: '#000', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div className={styles.root}>
+      {/* Background Elements */}
+      <div className={styles.bgWrapper}>
+        <div className={styles.bgGradient} />
+        <div className={styles.gridOverlay} />
+      </div>
+
       <motion.div
+        className={styles.formContainer}
         initial={{ opacity: 0, scale: 0.9, y: 40 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.8, ease: 'easeOut' }}
       >
-            <Tilt
-              glareEnable={true}
-              glareColor="rgba(255,255,255,0.12)"
-              glarePosition="all"
-              tiltMaxAngleX={3}
-              tiltMaxAngleY={3}
-              perspective={1200}
-              scale={1.01}
-              transitionSpeed={2500}
-            >
-              <Paper elevation={6} className={styles.loginContainer} style={{ 
-                background: '#111', 
-                borderRadius: 16, 
-                padding: 32, 
-                maxWidth: 800, 
-                width: '90vw', 
-                maxHeight: '90vh', 
-                overflowY: 'auto',
-                display: 'flex', 
-                flexDirection: 'column', 
-                alignItems: 'center' 
-              }}>
-            <form onSubmit={handleSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div className={styles.inputField} style={{ marginBottom: 20, width: '95%' }}>
-                <TextField
-                  fullWidth
-                  label="Project Name"
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  required
-                  InputProps={{
-                    style: { color: '#fff', fontSize: 20, height: 56, background: '#222', borderRadius: 8, border: '1.5px solid #444' },
-                  }}
-                  InputLabelProps={{ style: { color: '#aaa', fontSize: 18 } }}
-                  sx={{
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#444',
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#0072ff',
-                    },
-                  }}
-                />
-              </div>
-              <div className={styles.inputField} style={{ marginBottom: 20, width: '95%' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <h3 style={{ color: '#fff', margin: '8px 0 12px', fontSize: 16 }}>GitHub (optional)</h3>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={repoEnabled}
-                        onChange={(_, v) => setRepoEnabled(v)}
-                        color="primary"
-                      />
-                    }
-                    label={<span style={{ color: '#ddd' }}>Connect repository</span>}
-                  />
-                </div>
-                {repoEnabled && (
-                  <>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, width: '100%' }}>
-                      <TextField
-                        fullWidth
-                        label="Repo Owner"
-                        value={repoOwner}
-                        onChange={e => setRepoOwner(e.target.value)}
-                        InputProps={{
-                          style: { color: '#fff', fontSize: 16, height: 48, background: '#222', borderRadius: 8, border: '1.5px solid #444' },
-                        }}
-                        InputLabelProps={{ style: { color: '#aaa', fontSize: 16 } }}
-                        sx={{
-                          '& .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#444',
-                          },
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#0072ff',
-                          },
-                        }}
-                      />
-                      <TextField
-                        fullWidth
-                        label="Repo Name"
-                        value={repoName}
-                        onChange={e => setRepoName(e.target.value)}
-                        InputProps={{
-                          style: { color: '#fff', fontSize: 16, height: 48, background: '#222', borderRadius: 8, border: '1.5px solid #444' },
-                        }}
-                        InputLabelProps={{ style: { color: '#aaa', fontSize: 16 } }}
-                        sx={{
-                          '& .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#444',
-                          },
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#0072ff',
-                          },
-                        }}
-                      />
-                    </div>
-                    <div style={{ marginTop: 12 }}>
-                      <TextField
-                        fullWidth
-                        label="GitHub App Installation ID"
-                        value={installationId}
-                        onChange={e => setInstallationId(e.target.value)}
-                        placeholder="Optional"
-                        InputProps={{
-                          style: { color: '#fff', fontSize: 16, height: 48, background: '#222', borderRadius: 8, border: '1.5px solid #444' },
-                        }}
-                        InputLabelProps={{ style: { color: '#aaa', fontSize: 16 } }}
-                        sx={{
-                          '& .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#444',
-                          },
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#0072ff',
-                          },
-                        }}
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
-              <div className={styles.inputField} style={{ marginBottom: 20, width: '95%' }}>
-                <TextField
-                  fullWidth
-                  label="Objective"
-                  value={objective}
-                  onChange={e => setObjective(e.target.value)}
-                  required
-                  InputProps={{
-                    style: { color: '#fff', fontSize: 20, height: 56, background: '#222', borderRadius: 8, border: '1.5px solid #444' },
-                  }}
-                  InputLabelProps={{ style: { color: '#aaa', fontSize: 18 } }}
-                  sx={{
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#444',
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#0072ff',
-                    },
-                  }}
-                />
-              </div>
-              <div className={styles.inputField} style={{ marginBottom: 20, width: '95%' }}>
-                <TextField
-                  fullWidth
-                  label="Description"
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
-                  multiline
-                  rows={4}
-                  InputProps={{
-                    style: { color: '#fff', fontSize: 18, background: '#222', borderRadius: 8, border: '1.5px solid #444' },
-                  }}
-                  InputLabelProps={{ style: { color: '#aaa', fontSize: 18 } }}
-                  sx={{
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#444',
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#0072ff',
-                    },
-                  }}
-                />
-              </div>
-              <div className={styles.inputField} style={{ marginBottom: 20, width: '95%' }}>
-                <TextField
-                  fullWidth
-                  label="Start Date"
-                  type="date"
-                  value={startDate}
-                  onChange={e => setStartDate(e.target.value)}
-                  InputLabelProps={{ shrink: true, style: { color: '#aaa', fontSize: 18 } }}
-                  InputProps={{ style: { color: '#fff', fontSize: 18, height: 56, background: '#222', borderRadius: 8, border: '1.5px solid #444' } }}
-                  required
-                  sx={{
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#444',
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#0072ff',
-                    },
-                  }}
-                />
-              </div>
-              <div className={styles.inputField} style={{ marginBottom: 20, width: '95%' }}>
-                <TextField
-                  fullWidth
-                  label="Target End Date"
-                  type="date"
-                  value={targetEndDate}
-                  onChange={e => setTargetEndDate(e.target.value)}
-                  InputLabelProps={{ shrink: true, style: { color: '#aaa', fontSize: 18 } }}
-                  InputProps={{ style: { color: '#fff', fontSize: 18, height: 56, background: '#222', borderRadius: 8, border: '1.5px solid #444' } }}
-                  required
-                  sx={{
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#444',
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#0072ff',
-                    },
-                  }}
-                />
-              </div>
-              <div className={styles.inputField} style={{ marginBottom: 20, width: '95%' }}>
-                <label style={{ color: '#aaa', fontSize: 18, marginBottom: 8, display: 'block' }}>Team Members</label>
-                <div className={styles.memberManagement}>
-                  <div className={styles.memberInput}>
-                    <TextField
-                      fullWidth
-                      value={memberSearchQuery}
-                      onChange={(e) => setMemberSearchQuery(e.target.value)}
-                      onFocus={() => setShowMemberSearch(true)}
-                      onBlur={() => setTimeout(() => setShowMemberSearch(false), 200)}
-                      placeholder="Search users by username or email"
-                      InputProps={{
-                        style: { color: '#fff', fontSize: 18, background: '#222', borderRadius: 8, border: '1.5px solid #444' },
-                      }}
-                      InputLabelProps={{ style: { color: '#aaa', fontSize: 18 } }}
-                      sx={{
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#444',
-                        },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#0072ff',
-                        },
-                      }}
-                    />
-                    {showMemberSearch && memberSearchQuery && (
-                      <div className={styles.memberSearchResults}>
-                        {searchResults.map((user, index) => (
-                          <div 
-                            key={index}
-                            className={styles.memberResult}
-                            onClick={() => handleAddMember(user)}
-                          >
-                            <div className={styles.memberInfo}>
-                              <span className={styles.memberUsername}>{user.username}</span>
-                              <span className={styles.memberEmail}>{user.email}</span>
-                            </div>
-                          </div>
-                        ))}
-                        {searchResults.length === 0 && (
-                          <div className={styles.noResults}>No users found</div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Selected Members */}
-                  <div className={styles.memberList}>
-                    {teamMembers.map((member, index) => (
-                      <div key={index} className={styles.memberChip}>
-                        <span>{member}</span>
-                        <button
-                          type="button"
-                          className={styles.removeMember}
-                          onClick={() => handleRemoveMember(member)}
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Requirements Sections */}
-              <div style={{ width: '95%', marginBottom: 20 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                  <h3 style={{ color: '#fff', margin: 0, fontSize: 16 }}>Functional Requirements</h3>
-                  <Button
-                    onClick={() => openModal('functional', 'add')}
-                    sx={{
-                      background: '#7c5cff',
-                      color: '#fff',
-                      fontSize: 12,
-                      padding: '4px 10px',
-                      '&:hover': { background: '#6d4df5' }
-                    }}
-                  >
-                    + Add
-                  </Button>
-                </div>
-                <div style={{ background: '#222', borderRadius: 8, padding: 12, marginBottom: 16, maxHeight: 120, overflowY: 'auto' }}>
-                  {functionalRequirements.length === 0 ? (
-                    <p style={{ color: '#aaa', textAlign: 'center', margin: 0 }}>No functional requirements added</p>
-                  ) : (
-                    functionalRequirements.map((req, index) => (
-                      <div key={req.id} style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center', 
-                        padding: '8px 0', 
-                        borderBottom: index < functionalRequirements.length - 1 ? '1px solid #333' : 'none'
-                      }}>
-                        <div>
-                          <div style={{ color: '#fff', fontSize: 14 }}>{req.title}</div>
-                          <div style={{ color: '#aaa', fontSize: 12 }}>{req.description}</div>
-                        </div>
-                        <div style={{ display: 'flex', gap: 4 }}>
-                          <Button
-                            size="small"
-                            onClick={() => openModal('functional', 'edit', req)}
-                            sx={{ 
-                              background: 'rgba(59, 130, 246, 0.2)', 
-                              color: '#60a5fa', 
-                              fontSize: 12,
-                              padding: '4px 8px',
-                              minWidth: 'auto'
-                            }}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            size="small"
-                            onClick={() => handleDeleteRequirement(req.id, 'functional')}
-                            sx={{ 
-                              background: 'rgba(239, 68, 68, 0.2)', 
-                              color: '#f87171', 
-                              fontSize: 12,
-                              padding: '4px 8px',
-                              minWidth: 'auto'
-                            }}
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
+        <div className={styles.header}>
+          <h1 className={styles.pageTitle}>Create Project</h1>
+          <p className={styles.pageSubtitle}>Define your new workspace and requirements</p>
+        </div>
 
-              <div style={{ width: '95%', marginBottom: 20 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                  <h3 style={{ color: '#fff', margin: 0, fontSize: 16 }}>Non-Functional Requirements</h3>
-                  <Button
-                    onClick={() => openModal('non-functional', 'add')}
-                    sx={{
-                      background: '#7c5cff',
-                      color: '#fff',
-                      fontSize: 12,
-                      padding: '4px 10px',
-                      '&:hover': { background: '#6d4df5' }
-                    }}
-                  >
-                    + Add
-                  </Button>
-                </div>
-                <div style={{ background: '#222', borderRadius: 8, padding: 12, marginBottom: 16, maxHeight: 120, overflowY: 'auto' }}>
-                  {nonFunctionalRequirements.length === 0 ? (
-                    <p style={{ color: '#aaa', textAlign: 'center', margin: 0 }}>No non-functional requirements added</p>
-                  ) : (
-                    nonFunctionalRequirements.map((req, index) => (
-                      <div key={req.id} style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center', 
-                        padding: '8px 0', 
-                        borderBottom: index < nonFunctionalRequirements.length - 1 ? '1px solid #333' : 'none'
-                      }}>
-                        <div>
-                          <div style={{ color: '#fff', fontSize: 14 }}>{req.title}</div>
-                          <div style={{ color: '#aaa', fontSize: 12 }}>{req.category} - {req.description}</div>
-                        </div>
-                        <div style={{ display: 'flex', gap: 4 }}>
-                          <Button
-                            size="small"
-                            onClick={() => openModal('non-functional', 'edit', req)}
-                            sx={{ 
-                              background: 'rgba(59, 130, 246, 0.2)', 
-                              color: '#60a5fa', 
-                              fontSize: 12,
-                              padding: '4px 8px',
-                              minWidth: 'auto'
-                            }}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            size="small"
-                            onClick={() => handleDeleteRequirement(req.id, 'non-functional')}
-                            sx={{ 
-                              background: 'rgba(239, 68, 68, 0.2)', 
-                              color: '#f87171', 
-                              fontSize: 12,
-                              padding: '4px 8px',
-                              minWidth: 'auto'
-                            }}
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
+        <form onSubmit={handleSubmit}>
+          {error && <p style={{ color: '#ff5252', marginBottom: 20, textAlign: 'center' }}>{error}</p>}
+          {success && <p style={{ color: '#4caf50', marginBottom: 20, textAlign: 'center' }}>{success}</p>}
 
-              {error && <div className={styles.error}>{error}</div>}
-              {success && <div className={styles.success}>{success}</div>}
-              <Button
-                type="submit"
-                fullWidth
-                sx={{
-                  marginTop: 2.5,
-                  fontWeight: 700,
-                  fontSize: 18,
-                  letterSpacing: 1,
-                  borderRadius: 2.5,
-                  background: 'linear-gradient(90deg, #0072ff 0%, #00c6ff 100%)',
-                  color: '#fff',
-                  boxShadow: '0 4px 24px 0 rgba(0,114,255,0.18)',
-                  textTransform: 'none',
-                  transition: 'background 0.3s, box-shadow 0.3s',
-                  '&:hover': {
-                    background: 'linear-gradient(90deg, #005be7 0%, #00aaff 100%)',
-                    boxShadow: '0 6px 32px 0 rgba(0,114,255,0.28)',
-                  },
+          <div className={styles.formSection}>
+            <div className={styles.sectionTitle}>Project Details</div>
+            
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>Project Name *</label>
+              <input
+                className={styles.inputField}
+                value={name}
+                onChange={e => setName(e.target.value)}
+                required
+                placeholder="Enter project name"
+              />
+            </div>
+
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>Objective *</label>
+              <input
+                className={styles.inputField}
+                value={objective}
+                onChange={e => setObjective(e.target.value)}
+                required
+                placeholder="Enter project objective"
+              />
+            </div>
+
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>Description</label>
+              <textarea
+                className={styles.textareaField}
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                rows={4}
+                placeholder="Describe project scope and details"
+              />
+            </div>
+
+            <div className={styles.formGrid}>
+              <ConfigProvider
+                theme={{
+                  algorithm: theme.darkAlgorithm,
+                  token: {
+                    colorBgContainer: 'rgba(255, 255, 255, 0.05)',
+                    colorBorder: 'rgba(255, 255, 255, 0.2)',
+                    colorText: '#fff',
+                    colorTextPlaceholder: 'rgba(255, 255, 255, 0.4)',
+                  }
                 }}
               >
-                Create Project
-              </Button>
-            </form>
-          </Paper>
-        </Tilt>
-      </motion.div>
+                <div className={styles.inputGroup}>
+                  <label className={styles.label}>Start Date *</label>
+                  <DatePicker
+                    className={styles.inputField}
+                    value={startDate ? dayjs(startDate) : null}
+                    onChange={(date) => setStartDate(date ? date.format('YYYY-MM-DD') : '')}
+                    style={{ width: '100%', padding: '12px 16px', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.2)', color: '#fff' }}
+                    format="YYYY-MM-DD"
+                  />
+                </div>
+                <div className={styles.inputGroup}>
+                  <label className={styles.label}>Target End Date *</label>
+                  <DatePicker
+                    className={styles.inputField}
+                    value={targetEndDate ? dayjs(targetEndDate) : null}
+                    onChange={(date) => setTargetEndDate(date ? date.format('YYYY-MM-DD') : '')}
+                    style={{ width: '100%', padding: '12px 16px', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.2)', color: '#fff' }}
+                    format="YYYY-MM-DD"
+                  />
+                </div>
+              </ConfigProvider>
+            </div>
+          </div>
 
-      <RequirementModal
-        isOpen={modalState.isOpen}
-        onClose={closeModal}
-        onSave={handleSaveRequirement}
-        requirement={modalState.editingRequirement}
-        type={modalState.type}
-        mode={modalState.mode}
-      />
+          <div className={styles.formSection}>
+            <div className={styles.sectionTitle}>Team Members</div>
+            <div className={styles.inputGroup}>
+              <div className={styles.memberSearchContainer}>
+                <input
+                  className={styles.inputField}
+                  value={memberSearchQuery}
+                  onChange={(e) => setMemberSearchQuery(e.target.value)}
+                  onFocus={() => setShowMemberSearch(true)}
+                  onBlur={() => setTimeout(() => setShowMemberSearch(false), 200)}
+                  placeholder="Search users by username or email"
+                />
+                {showMemberSearch && memberSearchQuery && (
+                  <div className={styles.searchResults}>
+                    {searchResults.length > 0 ? (
+                      searchResults.map((user, index) => (
+                        <div 
+                          key={index}
+                          className={styles.searchResultItem}
+                          onMouseDown={() => handleAddMember(user)} // Use onMouseDown to prevent blur before click
+                        >
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{ color: '#fff', fontWeight: 600 }}>{user.username}</span>
+                            <span style={{ color: '#aaa', fontSize: '0.85rem' }}>{user.email}</span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div style={{ padding: '16px', textAlign: 'center', color: '#aaa' }}>No users found</div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className={styles.memberList}>
+                {teamMembers.map((member, index) => (
+                  <div key={index} className={styles.memberChip}>
+                    <div className={styles.memberAvatar}>
+                      {member.charAt(0).toUpperCase()}
+                    </div>
+                    <span className={styles.memberName}>{member}</span>
+                    <button
+                      type="button"
+                      className={styles.removeMemberBtn}
+                      onClick={() => handleRemoveMember(member)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.formSection}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div className={styles.sectionTitle} style={{ margin: 0 }}>Functional Requirements</div>
+              <button 
+                type="button" 
+                onClick={() => openModal('functional', 'add')}
+                className={styles.cancelBtn}
+                style={{ padding: '8px 16px', fontSize: '0.9rem' }}
+              >
+                + Add New
+              </button>
+            </div>
+            
+            {functionalRequirements.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {functionalRequirements.map((req) => (
+                  <div key={req.id} style={{ 
+                    background: 'rgba(255,255,255,0.03)', 
+                    padding: '16px', 
+                    borderRadius: '12px',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <div>
+                      <h4 style={{ margin: '0 0 4px 0', color: '#fff' }}>{req.title}</h4>
+                      <p style={{ margin: 0, color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem' }}>{req.description.substring(0, 60)}...</p>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button 
+                        type="button"
+                        onClick={() => openModal('functional', 'edit', req)}
+                        className={styles.cancelBtn}
+                        style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => handleDeleteRequirement(req.id, 'functional')}
+                        className={styles.removeMemberBtn}
+                        style={{ fontSize: '1.2rem', padding: '0 8px' }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontStyle: 'italic', textAlign: 'center', padding: '20px 0' }}>
+                No functional requirements added yet.
+              </p>
+            )}
+          </div>
+
+          <div className={styles.formSection}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div className={styles.sectionTitle} style={{ margin: 0 }}>Non-Functional Requirements</div>
+              <button 
+                type="button" 
+                onClick={() => openModal('non-functional', 'add')}
+                className={styles.cancelBtn}
+                style={{ padding: '8px 16px', fontSize: '0.9rem' }}
+              >
+                + Add New
+              </button>
+            </div>
+
+            {nonFunctionalRequirements.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {nonFunctionalRequirements.map((req) => (
+                  <div key={req.id} style={{ 
+                    background: 'rgba(255,255,255,0.03)', 
+                    padding: '16px', 
+                    borderRadius: '12px',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <div>
+                      <h4 style={{ margin: '0 0 4px 0', color: '#fff' }}>{req.title}</h4>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <span style={{ 
+                          fontSize: '0.75rem', 
+                          padding: '2px 8px', 
+                          borderRadius: '12px', 
+                          background: 'rgba(0, 114, 255, 0.2)', 
+                          color: '#00c6ff' 
+                        }}>
+                          {req.category}
+                        </span>
+                        <p style={{ margin: 0, color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem' }}>{req.description.substring(0, 50)}...</p>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button 
+                        type="button"
+                        onClick={() => openModal('non-functional', 'edit', req)}
+                        className={styles.cancelBtn}
+                        style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => handleDeleteRequirement(req.id, 'non-functional')}
+                        className={styles.removeMemberBtn}
+                        style={{ fontSize: '1.2rem', padding: '0 8px' }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontStyle: 'italic', textAlign: 'center', padding: '20px 0' }}>
+                No non-functional requirements added yet.
+              </p>
+            )}
+          </div>
+
+          <div className={styles.actions}>
+            <button 
+              type="button" 
+              className={styles.cancelBtn}
+              onClick={() => window.history.back()}
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit" 
+              className={styles.submitBtn}
+            >
+              Create Project
+            </button>
+          </div>
+        </form>
+
+        <RequirementModal
+          isOpen={modalState.isOpen}
+          onClose={closeModal}
+          onSave={handleSaveRequirement}
+          type={modalState.type}
+          mode={modalState.mode}
+          requirement={modalState.editingRequirement}
+        />
+      </motion.div>
     </div>
   );
 };

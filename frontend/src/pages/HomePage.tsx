@@ -1,211 +1,183 @@
-import React from "react";
-import { motion } from "framer-motion";
-import type { Variants } from "framer-motion";
-import styles from "../styles/HomePage.module.css";
-
-/* ---------------- Motion ---------------- */
-
-const fadeReveal: Variants = {
-  hidden: { opacity: 0, y: 24 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.7,
-      ease: [0.16, 1, 0.3, 1],
-    },
-  },
-};
-
-const staggerContainer: Variants = {
-  hidden: {},
-  visible: {
-    transition: {
-      staggerChildren: 0.18,
-    },
-  },
-};
-
-/* ---------------- Component ---------------- */
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import styles from '../styles/HomePage.module.css';
+import { useUser } from '../contexts/UserContext';
+import { 
+  RocketLaunch, 
+  ViewKanban, 
+  Timeline, 
+  Group, 
+  Insights, 
+  Psychology,
+  ArrowForward 
+} from '@mui/icons-material';
 
 const HomePage: React.FC = () => {
+  const { user } = useUser();
+  
   return (
     <div className={styles.root}>
-      {/* Background */}
-      <div className={styles.bgGradient} />
-      <div className={styles.bgGrid} />
+      {/* Background Elements */}
+      <div className={styles.bgWrapper}>
+        <div className={styles.bgGradient} />
+        <div className={styles.gridOverlay} />
+      </div>
 
-      {/* HERO */}
-      <section className={styles.hero}>
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={fadeReveal}
+      {/* Hero Section */}
+      <section className={styles.heroSection}>
+        <motion.div 
+          className={styles.heroContent}
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
         >
-          <h1 className={styles.heroTitle}>Nexus</h1>
-
+          <h1 className={styles.heroTitle}>
+            Manage Projects with <br />
+            <span className={styles.gradientText}>Intelligent Precision</span>
+          </h1>
           <p className={styles.heroSubtitle}>
-            A structured project management system for the entire project lifecycle.
+            The all-in-one workspace that bridges the gap between planning and execution. 
+            Streamline workflows, track progress, and deliver results with Nexus.
           </p>
+          
+          <div className={styles.ctaGroup}>
+            <Link to={user ? "/projects" : "/register"} className={styles.primaryBtn}>
+              Get Started Free <ArrowForward style={{ marginLeft: 8, fontSize: 20 }} />
+            </Link>
+          </div>
+        </motion.div>
 
-          <p className={styles.heroDescription}>
-            Plan projects from inception, manage execution with visual boards and
-            timelines, and track progress with real-time insights — all in one
-            unified workspace.
-          </p>
+        {/* 3D Dashboard Mockup */}
+        <motion.div 
+          className={styles.heroMockup}
+          initial={{ opacity: 0, rotateX: 20, y: 50 }}
+          animate={{ opacity: 1, rotateX: 10, y: 0 }}
+          transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
+        >
+          <div className={styles.mockupContainer}>
+            <div className={styles.mockHeader}>
+              <div className={styles.mockDot} style={{ background: '#ff5f56' }} />
+              <div className={styles.mockDot} style={{ background: '#ffbd2e' }} />
+              <div className={styles.mockDot} style={{ background: '#27c93f' }} />
+            </div>
+            <div className={styles.mockBody}>
+              <div className={styles.mockSidebar}>
+                {/* Sidebar mock content */}
+                <div style={{ padding: 20 }}>
+                  <div style={{ height: 8, width: '60%', background: 'rgba(255,255,255,0.1)', borderRadius: 4, marginBottom: 20 }} />
+                  <div style={{ height: 8, width: '80%', background: 'rgba(255,255,255,0.05)', borderRadius: 4, marginBottom: 12 }} />
+                  <div style={{ height: 8, width: '80%', background: 'rgba(255,255,255,0.05)', borderRadius: 4, marginBottom: 12 }} />
+                  <div style={{ height: 8, width: '80%', background: 'rgba(255,255,255,0.05)', borderRadius: 4, marginBottom: 12 }} />
+                </div>
+              </div>
+              <div className={styles.mockContent}>
+                <div className={styles.mockChart} />
+                <div className={styles.mockGrid}>
+                  <div className={styles.mockCard} />
+                  <div className={styles.mockCard} />
+                  <div className={styles.mockCard} />
+                </div>
+              </div>
+            </div>
+          </div>
         </motion.div>
       </section>
 
-      {/* PROBLEM */}
-      <motion.section
-        className={styles.section}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true }}
-        variants={fadeReveal}
-      >
-        <h2>Why Nexus exists</h2>
-
-        <p>
-          Teams are expected to manage complex projects using tools that focus
-          only on individual tasks.
-        </p>
-
-        <p>
-          This ignores project foundations, fractures timelines, and forces
-          teams to constantly switch context between disconnected systems.
-        </p>
-
-        <p>
-          As complexity grows, execution breaks down — not because teams lack
-          discipline, but because their tools lack structure.
-        </p>
-      </motion.section>
-
-      {/* APPROACH / LIFECYCLE */}
-      <motion.section
-        className={styles.section}
-        variants={staggerContainer}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true }}
-      >
-        <motion.h2 variants={fadeReveal}>The Nexus approach</motion.h2>
-
-        <div className={styles.lifecycle}>
-          <motion.div variants={fadeReveal} className={styles.lifecycleStep}>
-            <h3>Inception</h3>
-            <p>
-              Define objectives, scope, stakeholders, milestones, and timelines
-              before execution begins.
-            </p>
-          </motion.div>
-
-          <motion.div variants={fadeReveal} className={styles.lifecycleStep}>
-            <h3>Planning</h3>
-            <p>
-              Plan work visually using Kanban boards, Gantt charts, and task
-              dependencies to understand how work connects.
-            </p>
-          </motion.div>
-
-          <motion.div variants={fadeReveal} className={styles.lifecycleStep}>
-            <h3>Execution</h3>
-            <p>
-              Collaborate in real time with task-based discussions, updates,
-              and shared project context.
-            </p>
-          </motion.div>
-
-          <motion.div variants={fadeReveal} className={styles.lifecycleStep}>
-            <h3>Tracking & Control</h3>
-            <p>
-              Monitor progress using burndown charts, milestone tracking,
-              and workload distribution.
-            </p>
-          </motion.div>
-
-          <motion.div variants={fadeReveal} className={styles.lifecycleStep}>
-            <h3>Insight & Assistance</h3>
-            <p>
-              Gain clarity through AI-assisted summaries, planning suggestions,
-              and execution insights.
-            </p>
-          </motion.div>
+      {/* Features Section */}
+      <section className={styles.featuresSection}>
+        <div className={styles.sectionHeader}>
+          <motion.h2 
+            className={styles.sectionTitle}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            Everything you need to succeed
+          </motion.h2>
+          <motion.p 
+            className={styles.sectionSubtitle}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+          >
+            Powerful tools integrated into a seamless workflow.
+          </motion.p>
         </div>
-      </motion.section>
 
-      {/* FEATURES */}
-      <motion.section
-        className={styles.section}
-        variants={staggerContainer}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true }}
-      >
-        <motion.h2 variants={fadeReveal}>Core capabilities</motion.h2>
-
-        <div className={styles.features}>
-          <motion.div variants={fadeReveal} className={styles.featureCard}>
-            <h4>Project Inception</h4>
-            <p>Structure goals, scope, milestones, and ownership from day one.</p>
-          </motion.div>
-
-          <motion.div variants={fadeReveal} className={styles.featureCard}>
-            <h4>Kanban & Gantt Planning</h4>
-            <p>Move seamlessly between visual boards and long-term timelines.</p>
-          </motion.div>
-
-          <motion.div variants={fadeReveal} className={styles.featureCard}>
-            <h4>Milestone & Burndown Tracking</h4>
-            <p>Measure progress, velocity, and delivery confidence in real time.</p>
-          </motion.div>
-
-          <motion.div variants={fadeReveal} className={styles.featureCard}>
-            <h4>AI-Assisted Insights</h4>
-            <p>Surface summaries, risks, and planning signals automatically.</p>
-          </motion.div>
+        <div className={styles.featuresGrid}>
+          <FeatureCard 
+            icon={<RocketLaunch sx={{ fontSize: 32 }} />}
+            title="Project Inception"
+            desc="Define clear goals, scope, and success criteria before you start building. Align your team from day one."
+            delay={0}
+          />
+          <FeatureCard 
+            icon={<ViewKanban sx={{ fontSize: 32 }} />}
+            title="Kanban Boards"
+            desc="Visualize your workflow with flexible boards. Drag and drop tasks to keep momentum going."
+            delay={0.1}
+          />
+          <FeatureCard 
+            icon={<Timeline sx={{ fontSize: 32 }} />}
+            title="Gantt Timelines"
+            desc="Master your schedule with interactive Gantt charts. Manage dependencies and hit your milestones."
+            delay={0.2}
+          />
+          <FeatureCard 
+            icon={<Group sx={{ fontSize: 32 }} />}
+            title="Team Collaboration"
+            desc="Work together in real-time. Assign roles, share updates, and keep everyone on the same page."
+            delay={0.3}
+          />
+          <FeatureCard 
+            icon={<Insights sx={{ fontSize: 32 }} />}
+            title="Real-time Analytics"
+            desc="Track velocity, burn-down rates, and project health with automatic data visualization."
+            delay={0.4}
+          />
+          <FeatureCard 
+            icon={<Psychology sx={{ fontSize: 32 }} />}
+            title="AI Insights"
+            desc="Leverage machine learning to detect risks early and get smart suggestions for optimization."
+            delay={0.5}
+          />
         </div>
-      </motion.section>
+      </section>
 
-      {/* WHO */}
-      <motion.section
-        className={styles.section}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true }}
-        variants={fadeReveal}
-      >
-        <h2>Who Nexus is for</h2>
-
-        <div className={styles.personas}>
-          <div>Academic & student teams</div>
-          <div>Software development teams</div>
-          <div>Startups & product teams</div>
-          <div>Any team managing structured work</div>
-        </div>
-      </motion.section>
-
-      {/* CTA */}
-      <motion.section
-        className={styles.cta}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true }}
-        variants={fadeReveal}
-      >
-        <h2>Ready to plan projects the right way?</h2>
-        <p>
-          Create your first project, define its foundation,
-          and let Nexus guide execution.
-        </p>
-
-        <div className={styles.ctaActions}>
-          <button className={styles.primaryBtn}>Create your first project</button>
-          <button className={styles.secondaryBtn}>Login</button>
-        </div>
-      </motion.section>
+      {/* Final CTA */}
+      <section className={styles.finalCta}>
+        <motion.div 
+          className={styles.ctaCard}
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+        >
+          <h2 className={styles.ctaTitle}>Ready to transform your workflow?</h2>
+          <p className={styles.ctaText}>Join thousands of teams using Nexus to deliver better software, faster.</p>
+          <Link to={user ? "/projects" : "/register"} className={styles.primaryBtn} style={{ fontSize: '1.2rem', padding: '18px 48px' }}>
+            Create your project now
+          </Link>
+        </motion.div>
+      </section>
     </div>
+  );
+};
+
+const FeatureCard: React.FC<{ icon: React.ReactNode, title: string, desc: string, delay: number }> = ({ icon, title, desc, delay }) => {
+  return (
+    <motion.div 
+      className={styles.featureCard}
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay, duration: 0.5 }}
+    >
+      <div className={styles.featureIcon}>{icon}</div>
+      <h3 className={styles.featureTitle}>{title}</h3>
+      <p className={styles.featureDesc}>{desc}</p>
+    </motion.div>
   );
 };
 

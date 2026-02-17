@@ -72,7 +72,7 @@ const RegisterPage: React.FC = () => {
         setError(data.message || "Google sign-up failed");
       } else {
         localStorage.setItem("nexus_jwt", data.token);
-        window.location.href = "/";
+        window.location.href = "/projects";
       }
     } catch {
       setError("Google sign-up error");
@@ -123,115 +123,151 @@ const RegisterPage: React.FC = () => {
     }
   };
 
+  /* Staggered animation variants */
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.08,
+        delayChildren: 0.2,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: { type: "spring", stiffness: 300, damping: 24 },
+    },
+  };
+
   return (
     <div className={styles.pageWrapper}>
       {/* Visual-only background */}
       <div className={styles.animatedBg} />
 
       <motion.div
-        initial={{ opacity: 0, y: 30, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.7, ease: "easeOut" }}
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
       >
         <Tilt
-          tiltMaxAngleX={3}
-          tiltMaxAngleY={3}
-          perspective={1200}
-          scale={1.01}
-          transitionSpeed={800}
+          tiltMaxAngleX={4}
+          tiltMaxAngleY={4}
+          perspective={1000}
+          scale={1.02}
+          transitionSpeed={1000}
           glareEnable
-          glareColor="rgba(255,255,255,0.08)"
-          glarePosition="bottom"
+          glareColor="rgba(255,255,255,0.1)"
+          glarePosition="all"
           trackOnWindow={false}
           gyroscope={false}
         >
-          <div className={styles.registerContainer}>
-            <h2 className={styles.title}>Register for Nexus</h2>
+          <motion.div 
+            className={styles.registerContainer}
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            <motion.h2 className={styles.title} variants={itemVariants}>
+              Register for Nexus
+            </motion.h2>
 
             <form onSubmit={handleRegister} className={styles.form}>
-              <div className={styles.inputField}>
+              <motion.div className={styles.inputField} variants={itemVariants}>
                 <TextField
                   fullWidth
                   label="Username"
                   variant="outlined"
-                  size="small"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  InputProps={{ style: { color: "#fff" } }}
-                  InputLabelProps={{ style: { color: "#aaa" } }}
+                  InputProps={{ 
+                    style: { color: "#fff" },
+                    autoComplete: "off"
+                  }}
+                  InputLabelProps={{ style: { color: "rgba(255,255,255,0.7)" } }}
                 />
-              </div>
+              </motion.div>
 
-              <div className={styles.inputField}>
+              <motion.div className={styles.inputField} variants={itemVariants}>
                 <TextField
                   fullWidth
                   label="Email"
                   variant="outlined"
-                  size="small"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   InputProps={{ style: { color: "#fff" } }}
-                  InputLabelProps={{ style: { color: "#aaa" } }}
+                  InputLabelProps={{ style: { color: "rgba(255,255,255,0.7)" } }}
                 />
-              </div>
+              </motion.div>
 
-              <div className={styles.inputField}>
+              <motion.div className={styles.inputField} variants={itemVariants}>
                 <TextField
                   fullWidth
                   label="Password"
                   type="password"
                   variant="outlined"
-                  size="small"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   InputProps={{ style: { color: "#fff" } }}
-                  InputLabelProps={{ style: { color: "#aaa" } }}
+                  InputLabelProps={{ style: { color: "rgba(255,255,255,0.7)" } }}
                 />
-              </div>
+              </motion.div>
 
-              <div className={styles.inputField}>
+              <motion.div className={styles.inputField} variants={itemVariants}>
                 <TextField
                   fullWidth
                   label="Confirm Password"
                   type="password"
                   variant="outlined"
-                  size="small"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   InputProps={{ style: { color: "#fff" } }}
-                  InputLabelProps={{ style: { color: "#aaa" } }}
+                  InputLabelProps={{ style: { color: "rgba(255,255,255,0.7)" } }}
                 />
-              </div>
+              </motion.div>
 
-              {error && <div className={styles.error}>{error}</div>}
-              {success && <div className={styles.success}>{success}</div>}
+              {error && (
+                <motion.div className={styles.error} variants={itemVariants}>
+                  {error}
+                </motion.div>
+              )}
+              {success && (
+                <motion.div className={styles.success} variants={itemVariants}>
+                  {success}
+                </motion.div>
+              )}
 
               <motion.button
                 className={styles.registerButton}
-                whileHover={{ scale: 1.04 }}
-                transition={{ type: "spring", stiffness: 250 }}
+                variants={itemVariants}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 type="submit"
               >
-                Register
+                Create Account
               </motion.button>
 
               {/* Google Sign-Up */}
-              <div className={styles.googleSection}>
+              <motion.div className={styles.googleSection} variants={itemVariants}>
                 <div className={styles.divider}>
-                  <span>OR</span>
+                  <span>OR CONTINUE WITH</span>
                 </div>
                 <div
                   className={styles.googleWrapper}
                   ref={googleBtnRef}
                 />
-              </div>
+              </motion.div>
             </form>
 
-            <div className={styles.footer}>
+            <motion.div className={styles.footer} variants={itemVariants}>
               <span>Already have an account?</span>
-              <Link to="/login">Login</Link>
-            </div>
-          </div>
+              <Link to="/login">Sign In</Link>
+            </motion.div>
+          </motion.div>
         </Tilt>
       </motion.div>
     </div>

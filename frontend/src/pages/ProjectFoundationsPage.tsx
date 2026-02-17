@@ -28,29 +28,24 @@ const ProjectFoundationsPage: React.FC = () => {
     });
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'completed':
+      case 'verified':
+        return '#10b981'; // green
+      case 'in-progress':
+      case 'inprogress':
+        return '#3b82f6'; // blue
+      case 'review':
+        return '#f59e0b'; // amber
+      default:
+        return '#6b7280'; // gray
+    }
+  };
+
   // Listen for project changes to ensure re-render when requirements update
   useEffect(() => {
     console.log('=== PROJECT FOUNDATIONS PAGE USEEFFECT TRIGGERED ===');
-    console.log('Project data:', {
-      functionalRequirements: project?.functionalRequirements?.length || 0,
-      nonFunctionalRequirements: project?.nonFunctionalRequirements?.length || 0,
-      totalRequirements: (project?.functionalRequirements?.length || 0) + (project?.nonFunctionalRequirements?.length || 0)
-    });
-    
-    // Log individual requirement statuses
-    project?.functionalRequirements?.forEach((req, index) => {
-      console.log(`Functional Requirement ${index + 1}: ${req.title} - Status: ${req.status}`);
-    });
-    
-    project?.nonFunctionalRequirements?.forEach((req, index) => {
-      console.log(`Non-Functional Requirement ${index + 1}: ${req.title} - Status: ${req.status}`);
-    });
-    
-    // Check if project Foundations page is receiving updates
-    const hasAnyReview = project?.functionalRequirements?.some(req => req.status === 'review') ||
-                       project?.nonFunctionalRequirements?.some(req => req.status === 'review');
-    console.log('=== HAS ANY REVIEW REQUIREMENTS ===', hasAnyReview);
-    console.log('=== END PROJECT FOUNDATIONS PAGE DEBUG ===');
   }, [project, project?.functionalRequirements, project?.nonFunctionalRequirements]);
 
   const openModal = (type: 'functional' | 'non-functional', mode: 'add' | 'edit', requirement?: any) => {
@@ -121,13 +116,11 @@ const ProjectFoundationsPage: React.FC = () => {
             ? `/api/projects/${project._id}/requirements`
             : `/api/projects/${project._id}/non-functional-requirements`)
         : (modalState.type === 'functional'
-            ? `/api/projects/${project._id}/requirements/:reqId`
-            : `/api/projects/${project._id}/non-functional-requirements/:reqId`);
+            ? `/api/projects/${project._id}/requirements/${requirement.id}`
+            : `/api/projects/${project._id}/non-functional-requirements/${requirement.id}`);
 
       const method = modalState.mode === 'add' ? 'POST' : 'PUT';
-      const url = modalState.mode === 'add' 
-        ? `http://localhost:5000${endpoint}`
-        : `http://localhost:5000${endpoint.replace(':reqId', requirement.id)}`;
+      const url = `http://localhost:5000${endpoint}`;
 
       const response = await fetch(url, {
         method,
@@ -163,421 +156,225 @@ const ProjectFoundationsPage: React.FC = () => {
   };
 
   return (
-    <section>
-          <h1>Project Foundations</h1>
-          <p className={styles.lead}>
-            Define core requirements and scope before execution begins.
-          </p>
+    <div className={styles.overviewContainer}>
+      {/* Animated Background */}
+      <div className={styles.bgWrapper}>
+        <div className={styles.bgGradient}></div>
+        <div className={styles.gridOverlay}></div>
+      </div>
 
-          <div className={styles.block}>
-            <h3>Project Overview</h3>
-            <div className={styles.metaGrid}>
-              <div>
-                <span>Objective</span>
-                <strong>{project.objective}</strong>
-              </div>
-              <div>
-                <span>Scope</span>
-                <strong>{project.description}</strong>
-              </div>
-            </div>
+      <div className={styles.overviewHeader}>
+        <h1>Project Foundations</h1>
+        <p className={styles.lead}>
+          Define core requirements and scope before execution begins.
+        </p>
+      </div>
+
+      {/* Project Overview Card */}
+      <div className={styles.detailCard} style={{ marginBottom: '48px' }}>
+        <h3>Project Scope & Objectives</h3>
+        <div className={styles.metaGrid}>
+          <div>
+            <span>Objective</span>
+            <strong>{project.objective}</strong>
           </div>
+          <div>
+            <span>Scope</span>
+            <strong>{project.description}</strong>
+          </div>
+        </div>
+      </div>
 
-          <div className={styles.block}>
-            <div className={styles.sectionHeader}>
-              <h3>Functional Requirements</h3>
-              {canEditRequirements(project) && (
-                <button 
-                  className={styles.addButton}
-                  onClick={() => openModal('functional', 'add')}
-                >
-                  + Add Requirement
-                </button>
-              )}
-            </div>
-            <div className={styles.requirementsTable}>
-              {(project.functionalRequirements?.length ?? 0) > 5 ? (
-                <div className={styles.scrollableTable}>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>Requirement</th>
-                        <th>Priority</th>
-                        <th>Status</th>
-                        <th>Tasks</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {project.functionalRequirements?.map((req) => (
-                        <React.Fragment key={req.id}>
-                          <tr>
-                            <td>{req.id}</td>
-                            <td>{req.title}</td>
-                            <td>
-                              <span className={`${styles.priority} ${styles[req.priority]}`}>
-                                {req.priority}
-                              </span>
-                            </td>
-                            <td>
-                              <span className={`${styles.status} ${styles[req.status.replace('-', '')]}`}>
-                                {req.status}
-                              </span>
-                            </td>
-                            <td>
-                              <div className={styles.tasksDropdown}>
-                                <button 
-                                  className={styles.dropdownButton}
-                                  onClick={() => toggleRequirementTasks(req.id)}
-                                >
-                                  View Tasks {expandedRequirements.has(req.id) ? '▲' : '▼'}
-                                </button>
-                              </div>
-                            </td>
-                            <td>
-                              {canEditRequirements(project) && (
-                                <>
-                                  <button 
-                                    className={styles.editButton}
-                                    onClick={() => openModal('functional', 'edit', req)}
-                                  >
-                                    Edit
-                                  </button>
-                                  <button 
-                                    className={styles.deleteButton}
-                                    onClick={() => handleDeleteRequirement(req.id, 'functional')}
-                                  >
-                                    Delete
-                                  </button>
-                                </>
-                              )}
-                            </td>
-                          </tr>
-                          {expandedRequirements.has(req.id) && (
-                            <tr className={styles.tasksRow}>
-                              <td colSpan={6}>
-                                <div className={styles.tasksList}>
-                                  {project.tasks
-                                    ?.filter(task => task.linkedRequirement?.type === 'functional' && task.linkedRequirement?.id === req.id)
-                                      .map(task => (
-                                        <div key={task.id} className={styles.taskItem}>
-                                          <div className={styles.taskInfo}>
-                                            <span className={styles.taskTitle}>{task.title}</span>
-                                            <span className={`${styles.taskStatus} ${styles[task.status.replace('-', '')]}`}>
-                                              {task.status}
-                                            </span>
-                                          </div>
-                                        </div>
-                                      ))}
-                                  {(!project.tasks?.some(task => task.linkedRequirement?.type === 'functional' && task.linkedRequirement?.id === req.id)) && (
-                                    <div className={styles.noTasks}>No tasks assigned</div>
-                                  )}
-                                </div>
-                              </td>
-                            </tr>
-                          )}
-                        </React.Fragment>
-                      ))}
-                    </tbody>
-                  </table>
+      {/* Functional Requirements */}
+      <div className={styles.requirementsSection}>
+        <div className={styles.requirementsHeader}>
+          <h2>Functional Requirements</h2>
+          {canEditRequirements(project) && (
+            <button 
+              className={styles.addButton}
+              onClick={() => openModal('functional', 'add')}
+            >
+              + Add Requirement
+            </button>
+          )}
+        </div>
+        
+        <div className={`${styles.requirementsGrid} ${styles.scrollableGrid}`}>
+          {project.functionalRequirements?.map((req) => (
+            <div key={req.id} className={styles.requirementItem}>
+              <div className={styles.reqItemHeader}>
+                <div className={styles.reqItemLeft}>
+                  <span className={styles.requirementId}>{req.id}</span>
                 </div>
-              ) : (
-                <table>
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Requirement</th>
-                      <th>Priority</th>
-                      <th>Status</th>
-                      <th>Tasks</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {project.functionalRequirements?.map((req) => (
-                      <React.Fragment key={req.id}>
-                        <tr>
-                          <td>{req.id}</td>
-                          <td>{req.title}</td>
-                          <td>
-                            <span className={`${styles.priority} ${styles[req.priority]}`}>
-                              {req.priority}
-                            </span>
-                          </td>
-                          <td>
-                            <span className={`${styles.status} ${styles[req.status.replace('-', '')]}`}>
-                              {req.status}
-                            </span>
-                          </td>
-                          <td>
-                            <div className={styles.tasksDropdown}>
-                              <button 
-                                className={styles.dropdownButton}
-                                onClick={() => toggleRequirementTasks(req.id)}
-                              >
-                                View Tasks {expandedRequirements.has(req.id) ? '▲' : '▼'}
-                              </button>
-                            </div>
-                          </td>
-                          <td>
-                            {canEditRequirements(project) && (
-                              <>
-                                <button 
-                                  className={styles.editButton}
-                                  onClick={() => openModal('functional', 'edit', req)}
-                                >
-                                  Edit
-                                </button>
-                                <button 
-                                  className={styles.deleteButton}
-                                  onClick={() => handleDeleteRequirement(req.id, 'functional')}
-                                >
-                                  Delete
-                                </button>
-                              </>
-                            )}
-                          </td>
-                        </tr>
-                        {expandedRequirements.has(req.id) && (
-                          <tr className={styles.tasksRow}>
-                            <td colSpan={6}>
-                              <div className={styles.tasksList}>
-                                {project.tasks
-                                  ?.filter(task => task.linkedRequirement?.type === 'functional' && task.linkedRequirement?.id === req.id)
-                                    .map(task => (
-                                      <div key={task.id} className={styles.taskItem}>
-                                        <div className={styles.taskInfo}>
-                                          <span className={styles.taskTitle}>{task.title}</span>
-                                          <span className={`${styles.taskStatus} ${styles[task.status.replace('-', '')]}`}>
-                                            {task.status}
-                                          </span>
-                                        </div>
-                                      </div>
-                                    ))}
-                                {(!project.tasks?.some(task => task.linkedRequirement?.type === 'functional' && task.linkedRequirement?.id === req.id)) && (
-                                  <div className={styles.noTasks}>No tasks assigned</div>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </React.Fragment>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
-
-          <div className={styles.block}>
-            <div className={styles.sectionHeader}>
-              <h3>Non-Functional Requirements</h3>
-              {canEditRequirements(project) && (
-                <button 
-                  className={styles.addButton}
-                  onClick={() => openModal('non-functional', 'add')}
+                <span 
+                  className={styles.requirementStatus}
+                  style={{ backgroundColor: getStatusColor(req.status) }}
                 >
-                  + Add Requirement
-                </button>
-              )}
-            </div>
-            <div className={styles.requirementsTable}>
-              {(project.nonFunctionalRequirements?.length ?? 0) > 5 ? (
-                <div className={styles.scrollableTable}>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>Category</th>
-                        <th>Requirement</th>
-                        <th>Priority</th>
-                        <th>Status</th>
-                        <th>Tasks</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {project.nonFunctionalRequirements?.map((req) => (
-                        <React.Fragment key={req.id}>
-                          <tr>
-                            <td>{req.id}</td>
-                            <td>
-                              <span className={`${styles.category} ${styles[req.category]}`}>
-                                {req.category}
-                              </span>
-                            </td>
-                            <td>{req.title}</td>
-                            <td>
-                              <span className={`${styles.priority} ${styles[req.priority]}`}>
-                                {req.priority}
-                              </span>
-                            </td>
-                            <td>
-                              <span className={`${styles.status} ${styles[req.status.replace('-', '')]}`}>
-                                {req.status}
-                              </span>
-                            </td>
-                            <td>
-                              <div className={styles.tasksDropdown}>
-                                <button 
-                                  className={styles.dropdownButton}
-                                  onClick={() => toggleRequirementTasks(req.id)}
-                                >
-                                  View Tasks {expandedRequirements.has(req.id) ? '▲' : '▼'}
-                                </button>
-                              </div>
-                            </td>
-                            <td>
-                              {canEditRequirements(project) && (
-                                <>
-                                  <button 
-                                    className={styles.editButton}
-                                    onClick={() => openModal('non-functional', 'edit', req)}
-                                  >
-                                    Edit
-                                  </button>
-                                  <button 
-                                    className={styles.deleteButton}
-                                    onClick={() => handleDeleteRequirement(req.id, 'non-functional')}
-                                  >
-                                    Delete
-                                  </button>
-                                </>
-                              )}
-                            </td>
-                          </tr>
-                          {expandedRequirements.has(req.id) && (
-                            <tr className={styles.tasksRow}>
-                              <td colSpan={7}>
-                                <div className={styles.tasksList}>
-                                  {project.tasks
-                                    ?.filter(task => task.linkedRequirement?.type === 'non-functional' && task.linkedRequirement?.id === req.id)
-                                      .map(task => (
-                                        <div key={task.id} className={styles.taskItem}>
-                                          <div className={styles.taskInfo}>
-                                            <span className={styles.taskTitle}>{task.title}</span>
-                                            <span className={`${styles.taskStatus} ${styles[task.status.replace('-', '')]}`}>
-                                              {task.status}
-                                            </span>
-                                          </div>
-                                        </div>
-                                      ))}
-                                  {(!project.tasks?.some(task => task.linkedRequirement?.type === 'non-functional' && task.linkedRequirement?.id === req.id)) && (
-                                    <div className={styles.noTasks}>No tasks assigned</div>
-                                  )}
-                                </div>
-                              </td>
-                            </tr>
-                          )}
-                        </React.Fragment>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <table>
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Category</th>
-                      <th>Requirement</th>
-                      <th>Priority</th>
-                      <th>Status</th>
-                      <th>Tasks</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {project.nonFunctionalRequirements?.map((req) => (
-                      <React.Fragment key={req.id}>
-                        <tr>
-                          <td>{req.id}</td>
-                          <td>
-                            <span className={`${styles.category} ${styles[req.category]}`}>
-                              {req.category}
-                            </span>
-                          </td>
-                          <td>{req.title}</td>
-                          <td>
-                            <span className={`${styles.priority} ${styles[req.priority]}`}>
-                              {req.priority}
-                            </span>
-                          </td>
-                          <td>
-                            <span className={`${styles.status} ${styles[req.status.replace('-', '')]}`}>
-                              {req.status}
-                            </span>
-                          </td>
-                          <td>
-                            <div className={styles.tasksDropdown}>
-                              <button 
-                                className={styles.dropdownButton}
-                                onClick={() => toggleRequirementTasks(req.id)}
-                              >
-                                View Tasks {expandedRequirements.has(req.id) ? '▲' : '▼'}
-                              </button>
-                            </div>
-                          </td>
-                          <td>
-                            {canEditRequirements(project) && (
-                              <>
-                                <button 
-                                  className={styles.editButton}
-                                  onClick={() => openModal('non-functional', 'edit', req)}
-                                >
-                                  Edit
-                                </button>
-                                <button 
-                                  className={styles.deleteButton}
-                                  onClick={() => handleDeleteRequirement(req.id, 'non-functional')}
-                                >
-                                  Delete
-                                </button>
-                              </>
-                            )}
-                          </td>
-                        </tr>
-                        {expandedRequirements.has(req.id) && (
-                          <tr className={styles.tasksRow}>
-                            <td colSpan={7}>
-                              <div className={styles.tasksList}>
-                                {project.tasks
-                                  ?.filter(task => task.linkedRequirement?.type === 'non-functional' && task.linkedRequirement?.id === req.id)
-                                    .map(task => (
-                                      <div key={task.id} className={styles.taskItem}>
-                                        <div className={styles.taskInfo}>
-                                          <span className={styles.taskTitle}>{task.title}</span>
-                                          <span className={`${styles.taskStatus} ${styles[task.status.replace('-', '')]}`}>
-                                            {task.status}
-                                          </span>
-                                        </div>
-                                      </div>
-                                    ))}
-                                {(!project.tasks?.some(task => task.linkedRequirement?.type === 'non-functional' && task.linkedRequirement?.id === req.id)) && (
-                                  <div className={styles.noTasks}>No tasks assigned</div>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </React.Fragment>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
+                  {req.status}
+                </span>
+              </div>
+              
+              <h4 className={styles.requirementTitle}>{req.title}</h4>
+              <p className={styles.requirementDescription}>{req.description}</p>
+              
+              <div className={styles.requirementMeta}>
+                <span className={styles.priorityBadge} data-priority={req.priority}>
+                  {req.priority}
+                </span>
+              </div>
 
-          <RequirementModal
-            isOpen={modalState.isOpen}
-            onClose={closeModal}
-            onSave={handleSaveRequirement}
-            type={modalState.type}
-            mode={modalState.mode}
-            requirement={modalState.editingRequirement}
-          />
-    </section>
+              <div className={styles.cardActions}>
+                <button 
+                  className={styles.viewTasksButton}
+                  onClick={() => toggleRequirementTasks(req.id)}
+                >
+                  {expandedRequirements.has(req.id) ? 'Hide Tasks' : 'View Tasks'}
+                </button>
+                
+                {canEditRequirements(project) && (
+                  <div className={styles.actionButtons}>
+                    <button 
+                      className={styles.editButton}
+                      onClick={() => openModal('functional', 'edit', req)}
+                    >
+                      Edit
+                    </button>
+                    <button 
+                      className={styles.deleteButton}
+                      onClick={() => handleDeleteRequirement(req.id, 'functional')}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {expandedRequirements.has(req.id) && (
+                <div className={styles.tasksContainer}>
+                  <div className={styles.tasksList}>
+                    {project.tasks?.filter(task => 
+                      task.linkedRequirement?.type === 'functional' && 
+                      task.linkedRequirement?.id === req.id
+                    ).map(task => (
+                      <div key={task.id} className={styles.taskItem}>
+                        <span className={styles.taskItemTitle}>{task.title}</span>
+                        <span className={styles.taskItemStatus}>{task.status}</span>
+                      </div>
+                    ))}
+                    {(!project.tasks?.some(task => 
+                      task.linkedRequirement?.type === 'functional' && 
+                      task.linkedRequirement?.id === req.id
+                    )) && (
+                      <div className={styles.noTasks}>No tasks assigned</div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Non-Functional Requirements */}
+      <div className={styles.requirementsSection}>
+        <div className={styles.requirementsHeader}>
+          <h2>Non-Functional Requirements</h2>
+          {canEditRequirements(project) && (
+            <button 
+              className={styles.addButton}
+              onClick={() => openModal('non-functional', 'add')}
+            >
+              + Add Requirement
+            </button>
+          )}
+        </div>
+        
+        <div className={`${styles.requirementsGrid} ${styles.scrollableGrid}`}>
+          {project.nonFunctionalRequirements?.map((req) => (
+            <div key={req.id} className={styles.requirementItem}>
+              <div className={styles.reqItemHeader}>
+                <div className={styles.reqItemLeft}>
+                  <span className={styles.requirementId}>{req.id}</span>
+                  <span className={styles.nfrCategoryBadge}>{req.category}</span>
+                </div>
+                <span 
+                  className={styles.requirementStatus}
+                  style={{ backgroundColor: getStatusColor(req.status) }}
+                >
+                  {req.status}
+                </span>
+              </div>
+              
+              <h4 className={styles.requirementTitle}>{req.title}</h4>
+              <p className={styles.requirementDescription}>{req.description}</p>
+              
+              <div className={styles.requirementMeta}>
+                <span className={styles.priorityBadge} data-priority={req.priority}>
+                  {req.priority}
+                </span>
+              </div>
+
+              <div className={styles.cardActions}>
+                <button 
+                  className={styles.viewTasksButton}
+                  onClick={() => toggleRequirementTasks(req.id)}
+                >
+                  {expandedRequirements.has(req.id) ? 'Hide Tasks' : 'View Tasks'}
+                </button>
+                
+                {canEditRequirements(project) && (
+                  <div className={styles.actionButtons}>
+                    <button 
+                      className={styles.editButton}
+                      onClick={() => openModal('non-functional', 'edit', req)}
+                    >
+                      Edit
+                    </button>
+                    <button 
+                      className={styles.deleteButton}
+                      onClick={() => handleDeleteRequirement(req.id, 'non-functional')}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {expandedRequirements.has(req.id) && (
+                <div className={styles.tasksContainer}>
+                  <div className={styles.tasksList}>
+                    {project.tasks?.filter(task => 
+                      task.linkedRequirement?.type === 'non-functional' && 
+                      task.linkedRequirement?.id === req.id
+                    ).map(task => (
+                      <div key={task.id} className={styles.taskItem}>
+                        <span className={styles.taskItemTitle}>{task.title}</span>
+                        <span className={styles.taskItemStatus}>{task.status}</span>
+                      </div>
+                    ))}
+                    {(!project.tasks?.some(task => 
+                      task.linkedRequirement?.type === 'non-functional' && 
+                      task.linkedRequirement?.id === req.id
+                    )) && (
+                      <div className={styles.noTasks}>No tasks assigned</div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <RequirementModal
+        isOpen={modalState.isOpen}
+        onClose={closeModal}
+        onSave={handleSaveRequirement}
+        type={modalState.type}
+        mode={modalState.mode}
+        requirement={modalState.editingRequirement}
+      />
+    </div>
   );
 };
 

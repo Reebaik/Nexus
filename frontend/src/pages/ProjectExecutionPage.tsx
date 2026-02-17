@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { TextField } from '@mui/material';
+import { DatePicker, ConfigProvider, theme } from 'antd';
+import dayjs from 'dayjs';
 import styles from '../styles/ProjectOverviewPage.module.css';
 import executionStyles from '../styles/ExecutionPage.module.css';
+import modalStyles from '../styles/ProjectPlanningPage.module.css';
 import type { ProjectOutletContext } from './ProjectLayout';
 import { useUser } from '../contexts/UserContext';
 
@@ -62,12 +65,12 @@ const ProjectExecutionPage: React.FC = () => {
 
   // Get all requirements from project (functional + non-functional)
   const allRequirements: Array<{title: string, type: 'functional' | 'non-functional', id: string}> = useMemo(() => [
-    ...(project?.functionalRequirements || []).map(req => ({
+    ...(project?.functionalRequirements || []).map((req: any) => ({
       title: req.title,
       type: 'functional' as const,
       id: req.id
     })),
-    ...(project?.nonFunctionalRequirements || []).map(req => ({
+    ...(project?.nonFunctionalRequirements || []).map((req: any) => ({
       title: req.title,
       type: 'non-functional' as const,
       id: req.id
@@ -126,12 +129,12 @@ const ProjectExecutionPage: React.FC = () => {
     setRequirementSearchQuery("");
     setShowRequirementDropdown(false);
     setFilteredRequirements([
-      ...(project?.functionalRequirements || []).map(req => ({
+      ...(project?.functionalRequirements || []).map((req: any) => ({
         title: req.title,
         type: 'functional' as const,
         id: req.id
       })),
-      ...(project?.nonFunctionalRequirements || []).map(req => ({
+      ...(project?.nonFunctionalRequirements || []).map((req: any) => ({
         title: req.title,
         type: 'non-functional' as const,
         id: req.id
@@ -161,7 +164,12 @@ const ProjectExecutionPage: React.FC = () => {
   };
 
   const selectTask = (task: Task) => {
-    setSelectedTask(task);
+    // If the clicked task is already selected, deselect it (toggle behavior)
+    if (selectedTask?.id === task.id) {
+      setSelectedTask(null);
+    } else {
+      setSelectedTask(task);
+    }
   };
 
   // Filter project members based on search query - Show all members initially, then filter
@@ -205,6 +213,19 @@ const ProjectExecutionPage: React.FC = () => {
     
     setFilteredMembers(filtered);
   }, [assigneeSearchQuery, project?.teamMembers, showAssigneeDropdown, taskModalState.editingTask?.taskMembers]);
+
+  // Scroll to selected task
+  useEffect(() => {
+    if (selectedTask) {
+      // Small delay to ensure the DOM has updated and the expansion animation has started
+      setTimeout(() => {
+        const element = document.getElementById(`task-row-${selectedTask.id}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+    }
+  }, [selectedTask]);
 
   const handleAddTeamMember = (member: string) => {
     console.log('=== ADDING TEAM MEMBER ===');
@@ -497,7 +518,7 @@ const ProjectExecutionPage: React.FC = () => {
           // For existing tasks, update in the project tasks array with backend response
           setProject(prev => {
             if (!prev) return prev;
-            const updatedTasks = (prev.tasks || []).map(task => 
+            const updatedTasks = (prev.tasks || []).map((task: any) => 
               task.id === mappedTask.id ? mappedTask : task
             );
             console.log('Updated tasks array (edit):', updatedTasks);
@@ -585,8 +606,14 @@ const ProjectExecutionPage: React.FC = () => {
   };
 
   return (
-    <section>
-          <div className={styles.executionHeader}>
+    <>
+      <div className={styles.bgWrapper}>
+        <div className={styles.bgGradient} />
+        <div className={styles.gridOverlay} />
+      </div>
+
+      <section className={executionStyles.executionContainer}>
+          <div className={styles.overviewHeader}>
             <div>
               <h1>Execution</h1>
               <p className={styles.lead}>
@@ -627,7 +654,7 @@ const ProjectExecutionPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Three Column Layout */}
+          {/* Two Column Layout with Expandable Details */}
           <div className={executionStyles.executionLayout}>
             {/* Left Column - Task List */}
             <div className={executionStyles.taskListColumn}>
@@ -647,212 +674,208 @@ const ProjectExecutionPage: React.FC = () => {
                 <div className={executionStyles.tableHeader}>
                   <div>Task</div>
                   <div>Status</div>
-                  <div>Assinged to</div>
+                  <div>Assigned to</div>
                   <div>Due</div>
                   <div>Priority</div>
                 </div>
                 
                 <div className={executionStyles.tableBody}>
-                  {project.tasks?.map(task => (
-                    <div 
-                      key={task.id} 
-                      className={`${executionStyles.taskRow} ${selectedTask?.id === task.id ? executionStyles.selected : ''}`}
-                      onClick={() => selectTask(task)}
-                    >
-                      <div className={executionStyles.taskTitleCell}>
-                        <span className={executionStyles.taskId}>{task.id}</span>
-                        {task.title}
+                  {project.tasks?.map((task: Task) => (
+                    <React.Fragment key={task.id}>
+                      <div 
+                        id={`task-row-${task.id}`}
+                        className={`${executionStyles.taskRow} ${selectedTask?.id === task.id ? executionStyles.selected : ''}`}
+                        onClick={() => selectTask(task)}
+                      >
+                        <div className={executionStyles.taskTitleCell}>
+                          <span className={executionStyles.taskId}>{task.id}</span>
+                          {task.title}
+                        </div>
+                        <div>
+                          <span className={`${styles.status} ${styles[task.status.replace('-', '')]}`}>
+                            {task.status}
+                          </span>
+                        </div>
+                        <div>
+                          {task.taskMembers && task.taskMembers.length > 0 ? (
+                            <div className={styles.taskMembersList}>
+                              {task.taskMembers.map((member: string, index: number) => (
+                                <div key={index} className={styles.memberChip}>
+                                  <span>{member}</span>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className={styles.unassigned}>No Members Assigned</span>
+                          )}
+                        </div>
+                        <div>
+                          {task.endDate ? new Date(task.endDate).toLocaleDateString() : 'No end date'}
+                        </div>
+                        <div>
+                          <span className={`${styles.priority} ${styles[task.priority]}`}>
+                            {task.priority}
+                          </span>
+                        </div>
                       </div>
-                      <div>
-                        <span className={`${styles.status} ${styles[task.status.replace('-', '')]}`}>
-                          {task.status}
-                        </span>
-                      </div>
-                      <div>
-                        {task.taskMembers && task.taskMembers.length > 0 ? (
-                          <div className={styles.taskMembersList}>
-                            {task.taskMembers.map((member: string, index: number) => (
-                              <div key={index} className={styles.memberChip}>
-                                <span>{member}</span>
+
+                      {/* Expanded Details Section */}
+                      {selectedTask?.id === task.id && (
+                        <div className={executionStyles.taskDetailsExpanded}>
+                          <div className={executionStyles.taskDetailsInner}>
+                            <div className={executionStyles.taskDetailsHeader}>
+                              <h2>{task.title}</h2>
+                              <div className={executionStyles.taskActions}>
+                                <button 
+                                  className={styles.editButton}
+                                  onClick={() => openTaskModal('edit', task)}
+                                >
+                                  Edit
+                                </button>
+                                <button 
+                                  className={styles.deleteButton}
+                                  onClick={() => {
+                                    if (confirm('Delete this task?')) {
+                                      handleDeleteTask(task.id);
+                                    }
+                                  }}
+                                >
+                                  Delete
+                                </button>
                               </div>
-                            ))}
+                            </div>
+
+                            {/* Status and Assignment Controls - Read Only */}
+                            <div className={executionStyles.taskControls}>
+                              <div className={executionStyles.controlGroup}>
+                                <label>Status</label>
+                                <div className={`${styles.status} ${styles[task.status.replace('-', '')]}`}>
+                                  {task.status}
+                                </div>
+                              </div>
+                              
+                              <div className={executionStyles.controlGroup}>
+                                <label>Assigned To</label>
+                                <div className={styles.taskMembersList}>
+                                  {task.taskMembers && task.taskMembers.length > 0 ? (
+                                    task.taskMembers.map((member: string, index: number) => (
+                                      <div key={index} className={styles.memberChip}>
+                                        <span>{member}</span>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <div className={styles.noMembers}>No members assigned</div>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              <div className={executionStyles.controlGroup}>
+                                <label>End Date</label>
+                                <div className={executionStyles.readOnlyField}>
+                                  {task.endDate ? new Date(task.endDate).toLocaleDateString() : 'No end date'}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Description and Context */}
+                            <div className={executionStyles.taskContext}>
+                              <div className={executionStyles.contextSection}>
+                                <h4>Description</h4>
+                                <p>{task.description || 'No description provided'}</p>
+                              </div>
+                              
+                              <div className={executionStyles.contextSection}>
+                                <h4>Priority</h4>
+                                <span className={`${styles.priority} ${styles[task.priority]}`}>
+                                  {task.priority}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Comments and Updates Tabs */}
+                            <div className={executionStyles.taskDiscussion}>
+                              <div className={executionStyles.discussionTabs}>
+                                <button 
+                                  className={`${executionStyles.tabButton} ${activeTab === 'comments' ? executionStyles.active : ''}`}
+                                  onClick={() => setActiveTab('comments')}
+                                >
+                                  💬 Comments ({task.comments?.length || 0})
+                                </button>
+                                <button 
+                                  className={`${executionStyles.tabButton} ${activeTab === 'updates' ? executionStyles.active : ''}`}
+                                  onClick={() => setActiveTab('updates')}
+                                >
+                                  📝 Updates ({task.updates?.length || 0})
+                                </button>
+                              </div>
+                              
+                              <div className={executionStyles.tabContent}>
+                                {activeTab === 'comments' && (
+                                  <div className={executionStyles.commentsSection}>
+                                    <button 
+                                      className={styles.addCommentButton}
+                                      onClick={() => handleAddComment(task.id)}
+                                    >
+                                      + Add Comment
+                                    </button>
+                                    
+                                    <div className={styles.discussionList}>
+                                      {task.comments && task.comments.length > 0 ? (
+                                        task.comments.map((comment, index) => (
+                                          <div key={index} className={styles.comment}>
+                                            <div className={styles.commentHeader}>
+                                              <span className={styles.commentAuthor}>{comment.author}</span>
+                                              <span className={styles.commentDate}>
+                                                {new Date(comment.date).toLocaleDateString()}
+                                              </span>
+                                            </div>
+                                            <div className={styles.commentContent}>{comment.content}</div>
+                                          </div>
+                                        ))
+                                      ) : (
+                                        <div className={styles.noComments}>No comments yet</div>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                {activeTab === 'updates' && (
+                                  <div className={executionStyles.updatesSection}>
+                                    <button 
+                                      className={styles.addCommentButton}
+                                      onClick={() => handleAddUpdate(task.id)}
+                                    >
+                                      + Add Update
+                                    </button>
+                                    
+                                    <div className={styles.discussionList}>
+                                      {task.updates && task.updates.length > 0 ? (
+                                        task.updates.map((update, index) => (
+                                          <div key={index} className={styles.comment}>
+                                            <div className={styles.commentHeader}>
+                                              <span className={styles.commentAuthor}>{update.author}</span>
+                                              <span className={styles.commentDate}>
+                                                {new Date(update.date).toLocaleDateString()}
+                                              </span>
+                                            </div>
+                                            <div className={styles.commentContent}>{update.content}</div>
+                                          </div>
+                                        ))
+                                      ) : (
+                                        <div className={styles.noComments}>No updates yet</div>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                        ) : (
-                          <span className={styles.unassigned}>No Members Assigned</span>
-                        )}
-                      </div>
-                      <div>
-                        {task.endDate ? new Date(task.endDate).toLocaleDateString() : 'No end date'}
-                      </div>
-                      <div>
-                        <span className={`${styles.priority} ${styles[task.priority]}`}>
-                          {task.priority}
-                        </span>
-                      </div>
-                    </div>
+                        </div>
+                      )}
+                    </React.Fragment>
                   ))}
                 </div>
               </div>
-            </div>
-
-            {/* Center Column - Task Details */}
-            <div className={executionStyles.taskDetailsColumn}>
-              {selectedTask ? (
-                <>
-                  <div className={executionStyles.taskDetailsHeader}>
-                    <h2>{selectedTask.title}</h2>
-                    <div className={executionStyles.taskActions}>
-                      <button 
-                        className={styles.editButton}
-                        onClick={() => openTaskModal('edit', selectedTask)}
-                      >
-                        Edit
-                      </button>
-                      <button 
-                        className={styles.deleteButton}
-                        onClick={() => {
-                          if (confirm('Delete this task?')) {
-                            handleDeleteTask(selectedTask.id);
-                          }
-                        }}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Status and Assignment Controls - Read Only */}
-                  <div className={executionStyles.taskControls}>
-                    <div className={executionStyles.controlGroup}>
-                      <label>Status</label>
-                      <div className={`${styles.status} ${styles[selectedTask.status.replace('-', '')]}`}>
-                        {selectedTask.status}
-                      </div>
-                    </div>
-                    
-                    <div className={executionStyles.controlGroup}>
-                      <label>Assigned To</label>
-                      <div className={styles.taskMembersList}>
-                        {selectedTask.taskMembers && selectedTask.taskMembers.length > 0 ? (
-                          selectedTask.taskMembers.map((member: string, index: number) => (
-                            <div key={index} className={styles.memberChip}>
-                              <span>{member}</span>
-                            </div>
-                          ))
-                        ) : (
-                          <div className={styles.noMembers}>No members assigned</div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className={executionStyles.controlGroup}>
-                      <label>End Date</label>
-                      <div className={executionStyles.readOnlyField}>
-                        {selectedTask.endDate ? new Date(selectedTask.endDate).toLocaleDateString() : 'No end date'}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Description and Context */}
-                  <div className={executionStyles.taskContext}>
-                    <div className={executionStyles.contextSection}>
-                      <h4>Description</h4>
-                      <p>{selectedTask.description || 'No description provided'}</p>
-                    </div>
-                    
-                    <div className={executionStyles.contextSection}>
-                      <h4>Priority</h4>
-                      <span className={`${styles.priority} ${styles[selectedTask.priority]}`}>
-                        {selectedTask.priority}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Comments and Updates Tabs */}
-                  <div className={executionStyles.taskDiscussion}>
-                    <div className={executionStyles.discussionTabs}>
-                      <button 
-                        className={`${executionStyles.tabButton} ${activeTab === 'comments' ? executionStyles.active : ''}`}
-                        onClick={() => setActiveTab('comments')}
-                      >
-                        💬 Comments ({selectedTask.comments?.length || 0})
-                      </button>
-                      <button 
-                        className={`${executionStyles.tabButton} ${activeTab === 'updates' ? executionStyles.active : ''}`}
-                        onClick={() => setActiveTab('updates')}
-                      >
-                        📝 Updates ({selectedTask.updates?.length || 0})
-                      </button>
-                    </div>
-                    
-                    <div className={executionStyles.tabContent}>
-                      {activeTab === 'comments' && (
-                        <div className={executionStyles.commentsSection}>
-                          <button 
-                            className={styles.addCommentButton}
-                            onClick={() => handleAddComment(selectedTask.id)}
-                          >
-                            + Add Comment
-                          </button>
-                          
-                          <div className={styles.discussionList}>
-                            {selectedTask.comments && selectedTask.comments.length > 0 ? (
-                              selectedTask.comments.map((comment, index) => (
-                                <div key={index} className={styles.comment}>
-                                  <div className={styles.commentHeader}>
-                                    <span className={styles.commentAuthor}>{comment.author}</span>
-                                    <span className={styles.commentDate}>
-                                      {new Date(comment.date).toLocaleDateString()}
-                                    </span>
-                                  </div>
-                                  <div className={styles.commentContent}>{comment.content}</div>
-                                </div>
-                              ))
-                            ) : (
-                              <div className={styles.noComments}>No comments yet</div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {activeTab === 'updates' && (
-                        <div className={executionStyles.updatesSection}>
-                          <button 
-                            className={styles.addCommentButton}
-                            onClick={() => handleAddUpdate(selectedTask.id)}
-                          >
-                            + Add Update
-                          </button>
-                          
-                          <div className={styles.discussionList}>
-                            {selectedTask.updates && selectedTask.updates.length > 0 ? (
-                              selectedTask.updates.map((update, index) => (
-                                <div key={index} className={styles.comment}>
-                                  <div className={styles.commentHeader}>
-                                    <span className={styles.commentAuthor}>{update.author}</span>
-                                    <span className={styles.commentDate}>
-                                      {new Date(update.date).toLocaleDateString()}
-                                    </span>
-                                  </div>
-                                  <div className={styles.commentContent}>{update.content}</div>
-                                </div>
-                              ))
-                            ) : (
-                              <div className={styles.noComments}>No updates yet</div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div className={executionStyles.noTaskSelected}>
-                  <div className={executionStyles.noTaskIcon}>📋</div>
-                  <h3>Select a task to view details</h3>
-                  <p>Choose a task from the list to see and edit its details</p>
-                </div>
-              )}
             </div>
 
             {/* Right Column - Activity Feed */}
@@ -871,7 +894,7 @@ const ProjectExecutionPage: React.FC = () => {
                 </div>
                 
                 {/* Sample activity items - would come from backend */}
-                {project.tasks?.slice(-5).reverse().map(task => (
+                {project.tasks?.slice(-5).reverse().map((task: Task) => (
                   <div key={task.id} className={executionStyles.activityItem}>
                     <div className={executionStyles.activityIcon}>
                       {task.status === 'done' ? '✅' : task.status === 'in-progress' ? '🔄' : '📋'}
@@ -893,49 +916,55 @@ const ProjectExecutionPage: React.FC = () => {
           </div>
       {/* Task Modal */}
       {taskModalState.isOpen && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modal}>
-            <div className={styles.modalHeader}>
+        <div className={modalStyles.modalOverlay}>
+          <div className={modalStyles.modal}>
+            <div className={modalStyles.modalHeader}>
               <h2>
                 {taskModalState.mode === 'add' ? 'Add' : 'Edit'} Task
               </h2>
-              <button onClick={closeTaskModal} className={styles.closeButton}>×</button>
+              <button onClick={closeTaskModal} className={modalStyles.closeButton}>×</button>
             </div>
-            <div className={styles.modalContent}>
-              <form onSubmit={handleSaveTask}>
-                <div className={styles.formGroup}>
-                  <label>Task Title</label>
+            <div className={modalStyles.modalContent}>
+              <form onSubmit={handleSaveTask} className={modalStyles.modalForm}>
+                <div className={modalStyles.formGroup}>
+                  <label>Task Title *</label>
                   <input 
                     type="text" 
                     name="title"
                     defaultValue={taskModalState.editingTask?.title || ''}
                     required
+                    className={modalStyles.formInput}
+                    placeholder="Enter task title"
                   />
                 </div>
-                <div className={styles.formGroup}>
+                <div className={modalStyles.formGroup}>
                   <label>Description</label>
                   <textarea 
                     name="description"
                     defaultValue={taskModalState.editingTask?.description || ''}
                     rows={3}
+                    className={modalStyles.formTextarea}
+                    placeholder="Describe the task..."
                   />
                 </div>
-                <div className={styles.formGroup}>
+                <div className={modalStyles.formGroup}>
                   <label>Priority</label>
                   <select 
                     name="priority"
                     defaultValue={taskModalState.editingTask?.priority || 'medium'}
+                    className={modalStyles.formSelect}
                   >
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
                     <option value="high">High</option>
                   </select>
                 </div>
-                <div className={styles.formGroup}>
+                <div className={modalStyles.formGroup}>
                   <label>Status</label>
                   <select 
                     name="status"
                     defaultValue={taskModalState.editingTask?.status || 'todo'}
+                    className={modalStyles.formSelect}
                   >
                     <option value="todo">To Do</option>
                     <option value="in-progress">In Progress</option>
@@ -944,35 +973,31 @@ const ProjectExecutionPage: React.FC = () => {
                     <option value="done">Done</option>
                   </select>
                 </div>
-                <div className={styles.formGroup}>
+                <div className={modalStyles.formGroup}>
                   <label>Task Team Members</label>
-                  <div className={styles.assigneeInput} ref={assigneeDropdownRef}>
+                  <div className={modalStyles.assigneeInput} ref={assigneeDropdownRef}>
                     <input 
                       type="text"
                       value={assigneeSearchQuery}
                       onChange={(e) => setAssigneeSearchQuery(e.target.value)}
                       onFocus={() => setShowAssigneeDropdown(true)}
                       placeholder="Add team members..."
-                      className={styles.assigneeSearchInput}
+                      className={modalStyles.assigneeSearchInput}
                     />
                     {showAssigneeDropdown && (
-                      <div className={styles.assigneeDropdown}>
+                      <div className={modalStyles.assigneeDropdown}>
                         {filteredMembers.length > 0 ? (
                           filteredMembers.map((member, index) => (
                             <div
                               key={`${member}-${index}`}
-                              className={styles.assigneeOption}
-                              onClick={() => {
-                                handleAddTeamMember(member);
-                                setAssigneeSearchQuery("");
-                                setShowAssigneeDropdown(false);
-                              }}
+                              className={modalStyles.assigneeOption}
+                              onMouseDown={() => handleAddTeamMember(member)}
                             >
                               {member}
                             </div>
                           ))
                         ) : (
-                          <div className={styles.noMembers}>
+                          <div className={modalStyles.noMembers}>
                             {assigneeSearchQuery ? "No matching members" : "Type to search members..."}
                           </div>
                         )}
@@ -981,13 +1006,13 @@ const ProjectExecutionPage: React.FC = () => {
                   </div>
                   
                   {/* Task Members Display */}
-                  <div className={styles.taskMembersList}>
+                  <div className={modalStyles.taskMembersList}>
                     {taskModalState.editingTask?.taskMembers?.map((member: string, index: number) => (
-                      <div key={index} className={styles.memberChip}>
+                      <div key={index} className={modalStyles.memberChip}>
                         <span>{member}</span>
                         <button
                           type="button"
-                          className={styles.removeMember}
+                          className={modalStyles.removeMember}
                           onClick={() => handleRemoveTeamMember(member)}
                         >
                           ×
@@ -995,28 +1020,28 @@ const ProjectExecutionPage: React.FC = () => {
                       </div>
                     ))}
                     {(!taskModalState.editingTask?.taskMembers || taskModalState.editingTask.taskMembers.length === 0) && (
-                      <div className={styles.noMembers}>No team members assigned</div>
+                      <div className={modalStyles.noMembers}>No team members assigned</div>
                     )}
                   </div>
                 </div>
-                <div className={styles.formGroup}>
+                <div className={modalStyles.formGroup}>
                   <label>Requirement</label>
-                  <div className={styles.assigneeInput} ref={requirementDropdownRef}>
+                  <div className={modalStyles.assigneeInput} ref={requirementDropdownRef}>
                     <input 
                       type="text"
                       value={requirementSearchQuery}
                       onChange={(e) => setRequirementSearchQuery(e.target.value)}
                       onFocus={() => setShowRequirementDropdown(true)}
                       placeholder="Assign to requirement..."
-                      className={styles.assigneeSearchInput}
+                      className={modalStyles.assigneeSearchInput}
                     />
                     {showRequirementDropdown && (
-                      <div className={styles.assigneeDropdown}>
+                      <div className={modalStyles.assigneeDropdown}>
                         {filteredRequirements.length > 0 ? (
                           filteredRequirements.map((requirement, index) => (
                             <div
                               key={index}
-                              className={styles.memberOption}
+                              className={modalStyles.memberOption}
                               onClick={() => {
                                 setTaskModalState({
                                   ...taskModalState,
@@ -1036,7 +1061,7 @@ const ProjectExecutionPage: React.FC = () => {
                             </div>
                           ))
                         ) : (
-                          <div className={styles.noMembers}>
+                          <div className={modalStyles.noMembers}>
                             {requirementSearchQuery ? "No matching requirements" : "Type to search requirements..."}
                           </div>
                         )}
@@ -1044,11 +1069,11 @@ const ProjectExecutionPage: React.FC = () => {
                     )}
                   </div>
                   {taskModalState.editingTask?.linkedRequirement && (
-                    <div className={styles.selectedMembers}>
-                      <span className={styles.memberTag}>
+                    <div className={modalStyles.selectedMembers}>
+                      <span className={modalStyles.memberTag}>
                         {taskModalState.editingTask.linkedRequirement.type === 'functional' 
-                          ? (project?.functionalRequirements?.find(req => req.id === taskModalState.editingTask?.linkedRequirement?.id)?.title || 'Unknown')
-                          : (project?.nonFunctionalRequirements?.find(req => req.id === taskModalState.editingTask?.linkedRequirement?.id)?.title || 'Unknown')
+                          ? (project?.functionalRequirements?.find((req: any) => req.id === taskModalState.editingTask?.linkedRequirement?.id)?.title || 'Unknown')
+                          : (project?.nonFunctionalRequirements?.find((req: any) => req.id === taskModalState.editingTask?.linkedRequirement?.id)?.title || 'Unknown')
                         }
                         <button
                           type="button"
@@ -1062,7 +1087,7 @@ const ProjectExecutionPage: React.FC = () => {
                             });
                             setRequirementSearchQuery('');
                           }}
-                          className={styles.removeMember}
+                          className={modalStyles.removeMember}
                         >
                           ×
                         </button>
@@ -1070,77 +1095,109 @@ const ProjectExecutionPage: React.FC = () => {
                     </div>
                   )}
                 </div>
-                <div className={styles.formGroup}>
-                  <TextField
-                    fullWidth
-                    label="Start Date"
-                    type="date"
-                    value={taskModalState.editingTask?.startDate ? 
-                      (typeof taskModalState.editingTask.startDate === 'string' ? 
-                        taskModalState.editingTask.startDate.split('T')[0] : 
-                        new Date(taskModalState.editingTask.startDate).toISOString().split('T')[0]
-                      ) : ''}
-                    onChange={(e) => {
-                      if (taskModalState.editingTask) {
-                        setTaskModalState({
-                          ...taskModalState,
-                          editingTask: {
-                            ...taskModalState.editingTask,
-                            startDate: e.target.value
+                <div className={modalStyles.formGroup}>
+                  <label>Start Date</label>
+                  <div className={modalStyles.dateInputContainer}>
+                    <ConfigProvider
+                      theme={{
+                        algorithm: theme.darkAlgorithm,
+                        token: {
+                          colorBgContainer: 'rgba(255, 255, 255, 0.05)',
+                          colorBorder: 'rgba(255, 255, 255, 0.2)',
+                          colorText: '#fff',
+                          colorTextPlaceholder: 'rgba(255, 255, 255, 0.4)',
+                        }
+                      }}
+                    >
+                      <DatePicker
+                        className={modalStyles.formInput}
+                        value={taskModalState.editingTask?.startDate ? dayjs(taskModalState.editingTask.startDate) : null}
+                        onChange={(date) => {
+                          if (taskModalState.editingTask) {
+                            setTaskModalState({
+                              ...taskModalState,
+                              editingTask: {
+                                ...taskModalState.editingTask,
+                                startDate: date ? date.format('YYYY-MM-DD') : ''
+                              }
+                            });
                           }
-                        });
-                      }
-                    }}
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{
-                      style: { cursor: 'pointer', backgroundColor: '#ffffff', color: '#111827' }
-                    }}
-                    sx={{
-                      '& input[type="date"]::-webkit-calendar-picker-indicator': {
-                        cursor: 'pointer',
-                        opacity: 1,
-                        filter: 'invert(0.5)'
-                      }
-                    }}
-                  />
+                        }}
+                        style={{ 
+                          width: '100%', 
+                          padding: '14px 18px', 
+                          background: 'rgba(255, 255, 255, 0.05)', 
+                          border: '1px solid rgba(255, 255, 255, 0.2)', 
+                          color: '#fff', 
+                          height: '48px'
+                        }}
+                        format="YYYY-MM-DD"
+                        placeholder="Select start date"
+                        allowClear={false}
+                        suffixIcon={<span style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '1.2rem' }}>📅</span>}
+                      />
+                    </ConfigProvider>
+                  </div>
                 </div>
-                <div className={styles.formGroup}>
-                  <TextField
-                    fullWidth
-                    label="End Date"
-                    type="date"
-                    value={taskModalState.editingTask?.endDate ? 
-                      (typeof taskModalState.editingTask.endDate === 'string' ? 
-                        taskModalState.editingTask.endDate.split('T')[0] : 
-                        new Date(taskModalState.editingTask.endDate).toISOString().split('T')[0]
-                      ) : ''}
-                    onChange={(e) => {
-                      if (taskModalState.editingTask) {
-                        setTaskModalState({
-                          ...taskModalState,
-                          editingTask: {
-                            ...taskModalState.editingTask,
-                            endDate: e.target.value
+                <div className={modalStyles.formGroup}>
+                  <label>End Date</label>
+                  <div className={modalStyles.dateInputContainer}>
+                    <ConfigProvider
+                      theme={{
+                        algorithm: theme.darkAlgorithm,
+                        token: {
+                          colorBgContainer: 'rgba(255, 255, 255, 0.05)',
+                          colorBorder: 'rgba(255, 255, 255, 0.2)',
+                          colorText: '#fff',
+                          colorTextPlaceholder: 'rgba(255, 255, 255, 0.4)',
+                        }
+                      }}
+                    >
+                      <DatePicker
+                        className={modalStyles.formInput}
+                        value={taskModalState.editingTask?.endDate ? dayjs(taskModalState.editingTask.endDate) : null}
+                        onChange={(date) => {
+                          if (taskModalState.editingTask) {
+                            setTaskModalState({
+                              ...taskModalState,
+                              editingTask: {
+                                ...taskModalState.editingTask,
+                                endDate: date ? date.format('YYYY-MM-DD') : ''
+                              }
+                            });
                           }
-                        });
-                      }
-                    }}
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{
-                      style: { cursor: 'pointer', backgroundColor: '#ffffff', color: '#111827' }
-                    }}
-                    sx={{
-                      '& input[type="date"]::-webkit-calendar-picker-indicator': {
-                        cursor: 'pointer',
-                        opacity: 1,
-                        filter: 'invert(0.5)'
-                      }
-                    }}
-                  />
+                        }}
+                        style={{ 
+                          width: '100%', 
+                          padding: '14px 18px', 
+                          background: 'rgba(255, 255, 255, 0.05)', 
+                          border: '1px solid rgba(255, 255, 255, 0.2)', 
+                          color: '#fff', 
+                          height: '48px'
+                        }}
+                        format="YYYY-MM-DD"
+                        placeholder="Select end date"
+                        allowClear={false}
+                        suffixIcon={<span style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '1.2rem' }}>📅</span>}
+                      />
+                    </ConfigProvider>
+                  </div>
                 </div>
-                <div className={styles.formActions}>
-                  <button type="button" onClick={closeTaskModal}>Cancel</button>
-                  <button type="submit">Save</button>
+
+                <div className={modalStyles.modalActions}>
+                  <button 
+                    type="button" 
+                    onClick={closeTaskModal}
+                    className={modalStyles.cancelButton}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    className={modalStyles.submitButton}
+                  >
+                    {taskModalState.mode === 'add' ? 'Add Task' : 'Save Changes'}
+                  </button>
                 </div>
               </form>
             </div>
@@ -1148,6 +1205,7 @@ const ProjectExecutionPage: React.FC = () => {
         </div>
       )}
     </section>
+    </>
   );
 };
 

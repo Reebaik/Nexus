@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import styles from './GanttChart.module.css';
 
 interface Task {
@@ -39,6 +39,17 @@ interface GanttChartProps {
 const GanttChart: React.FC<GanttChartProps> = ({ tasks, milestones }) => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week');
+
+  const taskListRef = useRef<HTMLDivElement>(null);
+  const timelineGridRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+
+  const handleScroll = () => {
+    if (timelineGridRef.current && taskListRef.current && headerRef.current) {
+      taskListRef.current.scrollTop = timelineGridRef.current.scrollTop;
+      headerRef.current.scrollLeft = timelineGridRef.current.scrollLeft;
+    }
+  };
 
   // Calculate date range
   const dateRange = useMemo(() => {
@@ -270,12 +281,17 @@ const GanttChart: React.FC<GanttChartProps> = ({ tasks, milestones }) => {
   const handleTaskClick = (task: Task) => {
     // For now, just show task details. In future, could open edit modal
     console.log('Task clicked:', task);
+    setSelectedTask(task);
   };
 
   const isToday = (date: Date) => {
     const today = new Date();
     return date.toDateString() === today.toDateString();
   };
+
+  // Calculate min width for timeline
+  const minWidthPerColumn = 60; // px
+  const totalMinWidth = dateColumns.length * minWidthPerColumn;
 
   return (
     <div className={styles.ganttChart}>
@@ -342,139 +358,154 @@ const GanttChart: React.FC<GanttChartProps> = ({ tasks, milestones }) => {
             <div className={styles.taskDuration}>Due On</div>
           </div>
           
-          {groupedTasks.map((group, groupIndex) => (
-            <React.Fragment key={groupIndex}>
-              {/* Milestone row */}
-              {group.milestone && (
-                <div className={styles.milestoneRow}>
-                  <div className={styles.taskName}>
-                    <div className={styles.taskInfo}>
-                      <span className={styles.taskId}>{group.milestone.id}</span>
-                      <span className={styles.taskTitle}>{group.milestone.title}</span>
-                    </div>
-                  </div>
-                  <div className={styles.taskAssignee}>-</div>
-                  <div className={styles.taskDuration}>
-                    {new Date(group.milestone.date).toLocaleDateString()}
-                  </div>
-                </div>
-              )}
-              
-              {/* Tasks under this milestone */}
-              {group.tasks.map(task => (
-                <div key={task.id} className={styles.taskRow}>
-                  <div className={styles.taskName}>
-                    <div className={styles.taskInfo}>
-                      <span className={styles.taskId}>{task.id}</span>
-                      <span className={styles.taskTitle}>{task.title}</span>
-                    </div>
-                  </div>
-                  <div className={styles.taskAssignee}>
-                    {task.teamMembers && task.teamMembers.length > 0 
-                      ? task.teamMembers.join(', ')
-                      : 'Unassigned'
-                    }
-                  </div>
-                  <div className={styles.taskDuration}>
-                    {task.endDate 
-                      ? new Date(task.endDate).toLocaleDateString()
-                      : 'No due date'
-                    }
-                  </div>
-                </div>
-              ))}
-            </React.Fragment>
-          ))}
-        </div>
-
-        <div className={styles.timeline}>
-          <div className={styles.dateHeader}>
-            {dateColumns.map((date, index) => (
-              <div
-                key={index}
-                className={`${styles.dateColumn} ${isToday(date) ? styles.today : ''}`}
-                style={{ width: `${100 / dateColumns.length}%` }}
-              >
-                {formatHeaderDate(date)}
-              </div>
-            ))}
-          </div>
-
-          <div className={styles.timelineGrid} style={{ '--column-count': dateColumns.length } as React.CSSProperties}>
+          <div className={styles.taskListContent} ref={taskListRef}>
             {groupedTasks.map((group, groupIndex) => (
               <React.Fragment key={groupIndex}>
-                {/* Milestone marker */}
+                {/* Milestone row */}
                 {group.milestone && (
-                  <div className={styles.timelineRow}>
-                    <div
-                      className={styles.milestoneMarker}
-                      style={{
-                        ...calculateMilestonePosition(group.milestone),
-                        cursor: 'pointer'
-                      }}
-                      title={`${group.milestone.title} - ${calculateMilestoneHealth(group.milestone)} (${calculateMilestoneProgress(group.milestone)}% complete)`}
-                    >
-                      {/* Milestone diamond with health color */}
-                      <div 
-                        className={styles.milestoneDiamond}
-                        style={{ backgroundColor: getHealthColor(calculateMilestoneHealth(group.milestone)) }}
-                      />
-                      <span className={styles.milestoneLabel}>{group.milestone.title}</span>
-                      {/* Progress indicator */}
-                      <div className={styles.milestoneProgress}>
-                        <div 
-                          className={styles.milestoneProgressBar}
-                          style={{ width: `${calculateMilestoneProgress(group.milestone)}%` }}
-                        />
-                        <span className={styles.milestoneProgressText}>{calculateMilestoneProgress(group.milestone)}%</span>
+                  <div className={styles.milestoneRow}>
+                    <div className={styles.taskName}>
+                      <div className={styles.taskInfo}>
+                        <span className={styles.taskId}>{group.milestone.id}</span>
+                        <span className={styles.taskTitle}>{group.milestone.title}</span>
                       </div>
+                    </div>
+                    <div className={styles.taskAssignee}>-</div>
+                    <div className={styles.taskDuration}>
+                      {new Date(group.milestone.date).toLocaleDateString()}
                     </div>
                   </div>
                 )}
                 
                 {/* Tasks under this milestone */}
-                {group.tasks.map(task => {
-                  const position = calculateTaskPosition(task);
-                  const progress = calculateTaskProgress(task);
-                  if (!position) return null;
+                {group.tasks.map(task => (
+                  <div key={task.id} className={styles.taskRow}>
+                    <div className={styles.taskName}>
+                      <div className={styles.taskInfo}>
+                        <span className={styles.taskId}>{task.id}</span>
+                        <span className={styles.taskTitle}>{task.title}</span>
+                      </div>
+                    </div>
+                    <div className={styles.taskAssignee}>
+                      {task.teamMembers && task.teamMembers.length > 0 
+                        ? task.teamMembers.join(', ')
+                        : 'Unassigned'
+                      }
+                    </div>
+                    <div className={styles.taskDuration}>
+                      {task.endDate 
+                        ? new Date(task.endDate).toLocaleDateString()
+                        : 'No due date'
+                      }
+                    </div>
+                  </div>
+                ))}
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
 
-                  return (
-                    <div key={task.id} className={styles.timelineRow}>
+        <div className={styles.timeline}>
+          <div 
+            className={styles.dateHeader}
+            ref={headerRef}
+          >
+            <div style={{ minWidth: `${totalMinWidth}px`, width: '100%', display: 'flex' }}>
+              {dateColumns.map((date, index) => (
+                <div
+                  key={index}
+                  className={`${styles.dateColumn} ${isToday(date) ? styles.today : ''}`}
+                  style={{ width: `${100 / dateColumns.length}%` }}
+                >
+                  {formatHeaderDate(date)}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div 
+            className={styles.timelineGrid} 
+            ref={timelineGridRef}
+            onScroll={handleScroll}
+          >
+            <div style={{ minWidth: `${totalMinWidth}px`, width: '100%' }}>
+              {groupedTasks.map((group, groupIndex) => (
+                <React.Fragment key={groupIndex}>
+                  {/* Milestone marker */}
+                  {group.milestone && (
+                    <div className={styles.timelineRow}>
                       <div
-                        className={styles.taskBar}
+                        className={styles.milestoneMarker}
                         style={{
-                          ...position,
-                          backgroundColor: getStatusColor(task.status),
+                          ...calculateMilestonePosition(group.milestone),
                           cursor: 'pointer'
                         }}
-                        onClick={() => handleTaskClick(task)}
+                        title={`${group.milestone.title} - ${calculateMilestoneHealth(group.milestone)} (${calculateMilestoneProgress(group.milestone)}% complete)`}
                       >
-                        {/* Progress bar background */}
-                        <div className={styles.taskBarBackground}>
-                          {/* Progress fill */}
+                        {/* Milestone diamond with health color */}
+                        <div 
+                          className={styles.milestoneDiamond}
+                          style={{ backgroundColor: getHealthColor(calculateMilestoneHealth(group.milestone)) }}
+                        />
+                        <span className={styles.milestoneLabel}>{group.milestone.title}</span>
+                        {/* Progress indicator */}
+                        <div className={styles.milestoneProgress}>
                           <div 
-                            className={styles.taskBarProgress}
-                            style={{ 
-                              width: `${progress}%`,
-                              backgroundColor: getProgressColor(progress)
-                            }}
+                            className={styles.milestoneProgressBar}
+                            style={{ width: `${calculateMilestoneProgress(group.milestone)}%` }}
                           />
-                        </div>
-                        <div className={styles.taskBarContent}>
-                          <span className={styles.taskBarTitle}>{task.title}</span>
-                          <span className={styles.taskBarDuration}>
-                            {task.startDate && task.endDate 
-                              ? Math.ceil((new Date(task.endDate).getTime() - new Date(task.startDate).getTime()) / (1000 * 60 * 60 * 24)) + ' days'
-                              : 'No dates'
-                            }
-                          </span>
+                          <span className={styles.milestoneProgressText}>{calculateMilestoneProgress(group.milestone)}%</span>
                         </div>
                       </div>
                     </div>
-                  );
-                })}
-              </React.Fragment>
-            ))}
+                  )}
+                  
+                  {/* Tasks under this milestone */}
+                  {group.tasks.map(task => {
+                    const position = calculateTaskPosition(task);
+                    const progress = calculateTaskProgress(task);
+                    
+                    // Always render a row, even if no position (to match sidebar)
+                    return (
+                      <div key={task.id} className={styles.timelineRow}>
+                        {position && (
+                          <div
+                            className={styles.taskBar}
+                            style={{
+                              ...position,
+                              backgroundColor: getStatusColor(task.status),
+                              cursor: 'pointer'
+                            }}
+                            onClick={() => handleTaskClick(task)}
+                          >
+                            {/* Progress bar background */}
+                            <div className={styles.taskBarBackground}>
+                              {/* Progress fill */}
+                              <div 
+                                className={styles.taskBarProgress}
+                                style={{ 
+                                  width: `${progress}%`,
+                                  backgroundColor: getProgressColor(progress)
+                                }}
+                              />
+                            </div>
+                            <div className={styles.taskBarContent}>
+                              <span className={styles.taskBarTitle}>{task.title}</span>
+                              <span className={styles.taskBarDuration}>
+                                {task.startDate && task.endDate 
+                                  ? Math.ceil((new Date(task.endDate).getTime() - new Date(task.startDate).getTime()) / (1000 * 60 * 60 * 24)) + ' days'
+                                  : 'No dates'
+                                }
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </React.Fragment>
+              ))}
+            </div>
           </div>
         </div>
       </div>

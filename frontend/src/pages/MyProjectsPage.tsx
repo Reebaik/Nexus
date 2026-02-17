@@ -1,8 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { Button, FormControlLabel, Switch } from "@mui/material";
 import { useNavigate, Link } from "react-router-dom";
 import styles from "../styles/MyProjectsPage.module.css";
 import { useUser } from "../contexts/UserContext";
+import { motion } from "framer-motion";
+import { DatePicker, ConfigProvider, theme } from 'antd';
+import dayjs from 'dayjs';
+import { 
+  Add, 
+  FolderOpen, 
+  AccessTime, 
+  Person, 
+  Edit,
+  Delete
+} from "@mui/icons-material";
 
 interface Project {
     _id: string;
@@ -13,11 +23,6 @@ interface Project {
     targetEndDate: string;
     createdBy: string | { username: string; email: string };
     teamMembers: string[];
-    github?: {
-        repoOwner?: string;
-        repoName?: string;
-        installationId?: string;
-    };
 }
 
 const MyProjectsPage: React.FC = () => {
@@ -33,16 +38,12 @@ const MyProjectsPage: React.FC = () => {
         description: "",
         startDate: "",
         targetEndDate: "",
-        teamMembers: [] as string[],
-        repoOwner: "",
-        repoName: "",
-        installationId: ""
+        teamMembers: [] as string[]
     });
     const [memberSearchQuery, setMemberSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState<Array<{ username: string, email: string }>>([]);
     const [showMemberSearch, setShowMemberSearch] = useState(false);
     const navigate = useNavigate();
-    const [repoEnabled, setRepoEnabled] = useState<boolean>(false);
 
     // Search for users when query changes
     const handleSearchMembers = async (query: string) => {
@@ -85,9 +86,6 @@ const MyProjectsPage: React.FC = () => {
     useEffect(() => {
         const fetchProjects = async () => {
             try {
-                console.log('Current user:', user);
-                console.log('Fetching projects...');
-                
                 const res = await fetch(
                     `${import.meta.env.VITE_API_URL}/api/projects`,
                     {
@@ -97,32 +95,19 @@ const MyProjectsPage: React.FC = () => {
                     }
                 );
                 const data = await res.json();
-                console.log('API Response:', data);
                 
                 if (!res.ok) {
-                    console.error('API Error:', data.message);
                     setError(data.message || "Failed to fetch projects");
                 } else {
-                    console.log('All projects from API:', data.projects);
-                    
                     // Filter projects to show only those where user is owner or team member
                     const userProjects = (data.projects || []).filter((project: Project) => {
                         const isOwner = isProjectOwner(project);
                         const isMember = isProjectMember(project);
-                        console.log(`Project ${project.name}:`, {
-                            createdBy: project.createdBy,
-                            teamMembers: project.teamMembers,
-                            isOwner,
-                            isMember,
-                            currentUsername: user?.username
-                        });
                         return isOwner || isMember;
                     });
-                    console.log('Filtered projects for user:', userProjects);
                     setProjects(userProjects);
                 }
             } catch (error) {
-                console.error('Fetch error:', error);
                 setError("Server error");
             } finally {
                 setLoading(false);
@@ -148,12 +133,8 @@ const MyProjectsPage: React.FC = () => {
             description: project.description || "",
             startDate: formatDateForInput(project.startDate),
             targetEndDate: formatDateForInput(project.targetEndDate),
-            teamMembers: project.teamMembers || [],
-            repoOwner: project.github?.repoOwner || "",
-            repoName: project.github?.repoName || "",
-            installationId: project.github?.installationId || ""
+            teamMembers: project.teamMembers || []
         });
-        setRepoEnabled(Boolean(project.github?.repoOwner && project.github?.repoName));
         setEditModalOpen(true);
     };
 
@@ -197,20 +178,14 @@ const MyProjectsPage: React.FC = () => {
                         "Content-Type": "application/json",
                         Authorization: `Bearer ${localStorage.getItem("nexus_jwt")}`,
                     },
-                    body: JSON.stringify((() => {
-                        const { name, objective, description, startDate, targetEndDate, teamMembers, repoOwner, repoName, installationId } = formData;
-                        const payload: any = { name, objective, description, startDate, targetEndDate, teamMembers };
-                        if (repoEnabled) {
-                            const github: any = {};
-                            if (repoOwner) github.repoOwner = repoOwner.trim();
-                            if (repoName) github.repoName = repoName.trim();
-                            if (installationId) github.installationId = installationId.trim();
-                            if (github.repoOwner && github.repoName) {
-                                payload.github = github;
-                            }
-                        }
-                        return payload;
-                    })()),
+                    body: JSON.stringify({
+                        name: formData.name,
+                        objective: formData.objective,
+                        description: formData.description,
+                        startDate: formData.startDate,
+                        targetEndDate: formData.targetEndDate,
+                        teamMembers: formData.teamMembers
+                    }),
                 }
             );
 
@@ -231,29 +206,20 @@ const MyProjectsPage: React.FC = () => {
         }
     };
 
-    // Remove click-outside handler - using onBlur instead
-
     const handleAddMember = (member: { username: string, email: string }) => {
-        // Check if member already exists
         setFormData(prev => {
             const existingMembers = prev.teamMembers || [];
             if (existingMembers.includes(member.username)) {
-                // Member already exists, don't add again
                 return prev;
             }
-
             return {
                 ...prev,
                 teamMembers: [...existingMembers, member.username]
             };
         });
-
-        // Show selected username briefly
         setMemberSearchQuery(member.username);
         setSearchResults([]);
         setShowMemberSearch(false);
-
-        // Clear search field after a short delay
         setTimeout(() => {
             setMemberSearchQuery("");
         }, 300);
@@ -275,224 +241,246 @@ const MyProjectsPage: React.FC = () => {
             description: "",
             startDate: "",
             targetEndDate: "",
-            teamMembers: [],
-            repoOwner: "",
-            repoName: "",
-            installationId: ""
+            teamMembers: []
         });
     };
 
     return (
-        <div className={styles.page}>
-            {/* Header */}
-            <div className={styles.header}>
-                <h1 className={styles.title}>My Projects</h1>
-                <Button
-                    variant="contained"
-                    onClick={() => navigate("/create-project")}
-                    sx={{ background: "#0072ff" }}
-                >
-                    + Create Project
-                </Button>
+        <div className={styles.root}>
+            {/* Background Elements */}
+            <div className={styles.bgWrapper}>
+                <div className={styles.bgGradient} />
+                <div className={styles.gridOverlay} />
             </div>
 
-            {loading && <p className={styles.loading}>Loading...</p>}
-            {error && <p className={styles.error}>{error}</p>}
-            {!loading && projects.length === 0 && (
-                <p className={styles.empty}>No projects found.</p>
-            )}
-
-            {!loading && projects.length > 0 &&
-                projects.map((project) => (
-                    <div key={project._id} className={styles.projectCard}>
-                        <div className={styles.projectContent}>
-                            <Link
-                                to={`/projects/${project._id}`}
-                                className={styles.projectLink}
-                            >
-                                <div className={styles.projectName}>{project.name}</div>
-                                <div className={styles.objective}>{project.objective}</div>
-
-                                <div className={styles.metaGrid}>
-                                    <div className={styles.metaItem}>
-                                        <div className={styles.metaLabel}>Start</div>
-                                        {new Date(project.startDate).toLocaleDateString()}
-                                    </div>
-
-                                    <div className={styles.metaItem}>
-                                        <div className={styles.metaLabel}>End</div>
-                                        {new Date(project.targetEndDate).toLocaleDateString()}
-                                    </div>
-
-                                    <div className={styles.metaItem}>
-                                        <div className={styles.metaLabel}>Team</div>
-                                        {project.teamMembers?.length || 0} members
-                                    </div>
-                                </div>
-                            </Link>
-
-                            <div className={styles.projectActions}>
-                                {(() => {
-                                    const canEdit = canEditProject(project);
-                                    console.log(`Project ${project.name} - Can edit:`, canEdit, 'User:', user?.username, 'Owner:', project.createdBy);
-                                    return canEdit;
-                                })() && (
-                                    <Button
-                                        variant="outlined"
-                                        size="small"
-                                        onClick={() => handleEditProject(project)}
-                                        sx={{
-                                            borderColor: "#0072ff",
-                                            color: "#0072ff",
-                                            mr: 1,
-                                            '&:hover': {
-                                                borderColor: "#0056cc",
-                                                backgroundColor: "rgba(0, 114, 255, 0.04)"
-                                            }
-                                        }}
-                                    >
-                                        Edit
-                                    </Button>
-                                )}
-                                {canEditProject(project) && (
-                                    <Button
-                                        variant="outlined"
-                                        size="small"
-                                        onClick={() => handleDeleteProject(project._id, project.name)}
-                                        sx={{
-                                            borderColor: "#dc3545",
-                                            color: "#dc3545",
-                                            '&:hover': {
-                                                borderColor: "#c82333",
-                                                backgroundColor: "rgba(220, 53, 69, 0.04)"
-                                            }
-                                        }}
-                                    >
-                                        Delete
-                                    </Button>
-                                )}
-                            </div>
-                        </div>
+            <motion.div 
+                className={styles.container}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5 }}
+            >
+                {/* Header */}
+                <div className={styles.header}>
+                    <div className={styles.titleSection}>
+                        <motion.h1 
+                            className={styles.pageTitle}
+                            initial={{ x: -20, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            transition={{ duration: 0.6, delay: 0.2 }}
+                        >
+                            My Projects
+                        </motion.h1>
+                        <motion.p 
+                            className={styles.pageSubtitle}
+                            initial={{ x: -20, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            transition={{ duration: 0.6, delay: 0.3 }}
+                        >
+                            Manage your workspaces and track progress
+                        </motion.p>
                     </div>
-                ))
-            }
+                    <Link to="/create-project" className={styles.createBtn}>
+                        <Add /> New Project
+                    </Link>
+                </div>
 
-            {/* Edit Project Modal */}
-            {editModalOpen && (
-                <div className={styles.modalOverlay}>
-                    <div className={styles.modal}>
-                        <div className={styles.modalHeader}>
-                            <h2>Edit Project</h2>
-                            <button className={styles.closeButton} onClick={handleCloseModal}>
-                                ×
-                            </button>
-                        </div>
+                {error && <p style={{ color: '#ff5252', marginBottom: 20 }}>{error}</p>}
 
-                        <div className={styles.modalContent}>
-                            <div className={styles.formGroup}>
-                                <label className={styles.formLabel}>Project Name</label>
-                                <input
-                                    type="text"
-                                    className={styles.formInput}
-                                    value={formData.name}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                                    placeholder="Enter project name"
-                                />
+                {loading ? (
+                    <div className={styles.loadingContainer}>
+                        <div className={styles.spinner} />
+                    </div>
+                ) : (
+                    <div className={styles.projectsGrid}>
+                        {projects.length === 0 ? (
+                            <motion.div 
+                                className={styles.emptyState}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.4 }}
+                            >
+                                <FolderOpen className={styles.emptyIcon} />
+                                <h3 className={styles.emptyTitle}>No projects yet</h3>
+                                <p className={styles.emptyText}>Create your first project to get started with Nexus.</p>
+                                <Link to="/create-project" className={styles.createBtn} style={{ display: 'inline-flex' }}>
+                                    Create Project
+                                </Link>
+                            </motion.div>
+                        ) : (
+                            projects.map((project, index) => (
+                                <motion.div
+                                    key={project._id}
+                                    className={styles.projectCard}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                                    onClick={(e) => {
+                                        // Prevent navigation if clicking action buttons
+                                        if ((e.target as HTMLElement).closest(`.${styles.cardActions}`)) return;
+                                        navigate(`/projects/${project._id}`);
+                                    }}
+                                >
+                                    <div className={styles.cardHeader}>
+                                        <div className={styles.projectIcon}>
+                                            <FolderOpen />
+                                        </div>
+                                        <span className={`${styles.statusBadge} ${styles.statusActive}`}>
+                                            Active
+                                        </span>
+                                    </div>
+                                    
+                                    <h3 className={styles.projectName}>{project.name}</h3>
+                                    <p className={styles.projectDesc}>
+                                        {project.objective || "No objective defined."}
+                                    </p>
+                                    
+                                    <div className={styles.cardFooter}>
+                                        <div className={styles.teamStack}>
+                                            {project.teamMembers && project.teamMembers.length > 0 ? (
+                                                project.teamMembers.slice(0, 3).map((member, i) => (
+                                                    <div key={i} className={styles.teamAvatar} title={member}>
+                                                        {member.charAt(0).toUpperCase()}
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className={styles.teamAvatar}><Person fontSize="small" /></div>
+                                            )}
+                                            {project.teamMembers && project.teamMembers.length > 3 && (
+                                                <div className={styles.teamAvatar} style={{ background: '#0072ff' }}>
+                                                    +{project.teamMembers.length - 3}
+                                                </div>
+                                            )}
+                                        </div>
+                                        
+                                        <div className={styles.dateInfo}>
+                                            <AccessTime fontSize="small" />
+                                            <span>{new Date(project.targetEndDate).toLocaleDateString()}</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Action Buttons */}
+                                    {canEditProject(project) && (
+                                        <div className={styles.cardActions} onClick={(e) => e.stopPropagation()}>
+                                            <button 
+                                                type="button"
+                                                className={`${styles.actionBtn} ${styles.editBtn}`}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleEditProject(project);
+                                                }}
+                                            >
+                                                <Edit fontSize="small" style={{ marginRight: 4, verticalAlign: 'text-bottom' }} /> Edit
+                                            </button>
+                                            <button 
+                                                type="button"
+                                                className={`${styles.actionBtn} ${styles.deleteBtn}`}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteProject(project._id, project.name);
+                                                }}
+                                            >
+                                                <Delete fontSize="small" style={{ marginRight: 4, verticalAlign: 'text-bottom' }} /> Delete
+                                            </button>
+                                        </div>
+                                    )}
+                                </motion.div>
+                            ))
+                        )}
+                    </div>
+                )}
+
+                {/* Edit Project Modal */}
+                {editModalOpen && (
+                    <div className={styles.modalOverlay} onClick={handleCloseModal}>
+                        <motion.div 
+                            className={styles.modal} 
+                            onClick={e => e.stopPropagation()}
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            transition={{ duration: 0.3, ease: "easeOut" }}
+                        >
+                            <div className={styles.modalHeader}>
+                                <h2>Edit Project</h2>
+                                <button className={styles.closeButton} onClick={handleCloseModal}>×</button>
                             </div>
 
-                            <div className={styles.formGroup}>
-                                <label className={styles.formLabel}>Objective</label>
-                                <textarea
-                                    className={styles.formTextarea}
-                                    value={formData.objective}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, objective: e.target.value }))}
-                                    placeholder="Describe project objective"
-                                    rows={3}
-                                />
-                            </div>
-
-                            <div className={styles.formGroup}>
-                                <label className={styles.formLabel}>Description</label>
-                                <textarea
-                                    className={styles.formTextarea}
-                                    value={formData.description}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                                    placeholder="Describe project scope and details"
-                                    rows={4}
-                                />
-                            </div>
-
-                            <div className={styles.formRow}>
-                                <div className={styles.formGroup}>
-                                    <label className={styles.formLabel}>Start Date</label>
-                                    <input
-                                        type="date"
-                                        className={styles.formInput}
-                                        value={formData.startDate}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
-                                    />
-                                </div>
-
-                                <div className={styles.formGroup}>
-                                    <label className={styles.formLabel}>Target End Date</label>
-                                    <input
-                                        type="date"
-                                        className={styles.formInput}
-                                        value={formData.targetEndDate}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, targetEndDate: e.target.value }))}
-                                    />
-                                </div>
-                            </div>
-
-                        <div className={styles.formGroup}>
-                            <FormControlLabel
-                                control={<Switch checked={repoEnabled} onChange={(_, v) => setRepoEnabled(v)} />}
-                                label="Connect GitHub repository"
-                            />
-                        </div>
-
-                            <div className={styles.formRow}>
-                                <div className={styles.formGroup}>
-                                    <label className={styles.formLabel}>GitHub Repo Owner (optional)</label>
-                                    <input
-                                        type="text"
-                                        className={styles.formInput}
-                                        value={formData.repoOwner}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, repoOwner: e.target.value }))}
-                                    placeholder="e.g., acme"
-                                    disabled={!repoEnabled}
-                                    />
-                                </div>
-                                <div className={styles.formGroup}>
-                                    <label className={styles.formLabel}>GitHub Repo Name (optional)</label>
-                                    <input
-                                        type="text"
-                                        className={styles.formInput}
-                                        value={formData.repoName}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, repoName: e.target.value }))}
-                                    placeholder="e.g., nexus"
-                                    disabled={!repoEnabled}
-                                    />
-                                </div>
-                            </div>
-                            <div className={styles.formGroup}>
-                                <label className={styles.formLabel}>GitHub App Installation ID (optional)</label>
-                                <input
-                                    type="text"
-                                    className={styles.formInput}
-                                    value={formData.installationId}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, installationId: e.target.value }))}
-                                placeholder="Installation ID if using a GitHub App"
-                                disabled={!repoEnabled}
-                                />
-                            </div>
-
-                            <div className={styles.formGroup}>
-                                <label className={styles.formLabel}>Team Members</label>
-                                <div className={styles.memberManagement}>
-                                    <div className={styles.memberInput}>
+                            <div className={styles.modalContent}>
+                                <div className={styles.formRowThree}>
+                                    <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                                        <label className={styles.formLabel}>Project Name</label>
                                         <input
                                             type="text"
+                                            className={styles.formInput}
+                                            value={formData.name}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                                            placeholder="Enter project name"
+                                        />
+                                    </div>
+
+                                    <ConfigProvider
+                                      theme={{
+                                        algorithm: theme.darkAlgorithm,
+                                        token: {
+                                          colorBgContainer: 'rgba(255, 255, 255, 0.05)',
+                                          colorBorder: 'rgba(255, 255, 255, 0.2)',
+                                          colorText: '#fff',
+                                          colorTextPlaceholder: 'rgba(255, 255, 255, 0.4)',
+                                        }
+                                      }}
+                                    >
+                                      <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                                          <label className={styles.formLabel}>Start Date</label>
+                                          <DatePicker
+                                              className={styles.formInput}
+                                              value={formData.startDate ? dayjs(formData.startDate) : null}
+                                              onChange={(date) => setFormData(prev => ({ ...prev, startDate: date ? date.format('YYYY-MM-DD') : '' }))}
+                                              style={{ width: '100%', padding: '14px 18px', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.2)', color: '#fff', height: '48px' }}
+                                              format="YYYY-MM-DD"
+                                          />
+                                      </div>
+
+                                      <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                                          <label className={styles.formLabel}>Target End Date</label>
+                                          <DatePicker
+                                              className={styles.formInput}
+                                              value={formData.targetEndDate ? dayjs(formData.targetEndDate) : null}
+                                              onChange={(date) => setFormData(prev => ({ ...prev, targetEndDate: date ? date.format('YYYY-MM-DD') : '' }))}
+                                              style={{ width: '100%', padding: '14px 18px', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.2)', color: '#fff', height: '48px' }}
+                                              format="YYYY-MM-DD"
+                                          />
+                                      </div>
+                                    </ConfigProvider>
+                                </div>
+
+                                <div className={styles.formRow}>
+                                    <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                                        <label className={styles.formLabel}>Objective</label>
+                                        <textarea
+                                            className={styles.formTextarea}
+                                            value={formData.objective}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, objective: e.target.value }))}
+                                            placeholder="Describe project objective"
+                                            rows={4}
+                                        />
+                                    </div>
+
+                                    <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                                        <label className={styles.formLabel}>Description</label>
+                                        <textarea
+                                            className={styles.formTextarea}
+                                            value={formData.description}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                                            placeholder="Describe project scope and details"
+                                            rows={4}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className={styles.formGroup}>
+                                    <label className={styles.formLabel}>Team Members</label>
+                                    <div className={styles.searchContainer}>
+                                        <input
                                             className={styles.formInput}
                                             value={memberSearchQuery}
                                             onChange={(e) => setMemberSearchQuery(e.target.value)}
@@ -501,33 +489,37 @@ const MyProjectsPage: React.FC = () => {
                                             placeholder="Search users by username or email"
                                         />
                                         {showMemberSearch && memberSearchQuery && (
-                                            <div className={styles.memberSearchResults}>
-                                                {searchResults.map((user, index) => (
-                                                    <div
-                                                        key={index}
-                                                        className={styles.memberResult}
-                                                        onClick={() => handleAddMember(user)}
-                                                    >
-                                                        <div className={styles.memberInfo}>
-                                                            <span className={styles.memberUsername}>{user.username}</span>
-                                                            <span className={styles.memberEmail}>{user.email}</span>
+                                            <div className={styles.searchResults}>
+                                                {searchResults.length > 0 ? (
+                                                    searchResults.map((user, index) => (
+                                                        <div 
+                                                            key={index}
+                                                            className={styles.searchResultItem}
+                                                            onMouseDown={() => handleAddMember(user)}
+                                                        >
+                                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                                <span style={{ color: '#fff', fontWeight: 600 }}>{user.username}</span>
+                                                                <span style={{ color: '#aaa', fontSize: '0.85rem' }}>{user.email}</span>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                ))}
-                                                {searchResults.length === 0 && (
-                                                    <div className={styles.noResults}>No users found</div>
+                                                    ))
+                                                ) : (
+                                                    <div style={{ padding: '16px', textAlign: 'center', color: '#aaa' }}>No users found</div>
                                                 )}
                                             </div>
                                         )}
                                     </div>
-                                    <div className={styles.memberList}>
+                                    <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap' }}>
                                         {formData.teamMembers.map((member, index) => (
-                                            <div key={index} className={styles.memberChip}>
-                                                <span>{member}</span>
+                                            <div key={index} className={styles.selectedMember}>
+                                                <div className={styles.memberAvatar}>
+                                                    {member.charAt(0).toUpperCase()}
+                                                </div>
+                                                <span className={styles.memberName}>{member}</span>
                                                 <button
-                                                    className={styles.removeMember}
+                                                    type="button"
+                                                    className={styles.removeMemberBtn}
                                                     onClick={() => handleRemoveMember(member)}
-                                                    title="Remove member"
                                                 >
                                                     ×
                                                 </button>
@@ -535,32 +527,16 @@ const MyProjectsPage: React.FC = () => {
                                         ))}
                                     </div>
                                 </div>
-                            </div>
-                        </div>
 
-                        <div className={styles.modalActions}>
-                            <Button
-                                variant="outlined"
-                                onClick={handleCloseModal}
-                                sx={{
-                                    borderColor: "#6c757d",
-                                    color: "#6c757d",
-                                    mr: 1
-                                }}
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                variant="contained"
-                                onClick={handleSaveProject}
-                                sx={{ background: "#0072ff" }}
-                            >
-                                Save Changes
-                            </Button>
-                        </div>
+                                <div className={styles.modalActions}>
+                                    <button className={styles.cancelBtn} onClick={handleCloseModal}>Cancel</button>
+                                    <button className={styles.saveBtn} onClick={handleSaveProject}>Save Changes</button>
+                                </div>
+                            </div>
+                        </motion.div>
                     </div>
-                </div>
-            )}
+                )}
+            </motion.div>
         </div>
     );
 };

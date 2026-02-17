@@ -26,7 +26,7 @@ function App() {
     <UserProvider>
       <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
         <Navbar />
-        <div style={{ flex: 1, marginTop: 60 }}>
+        <div style={{ flex: 1, marginTop: 70 }}>
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />

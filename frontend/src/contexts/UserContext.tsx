@@ -69,7 +69,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (typeof project.createdBy === 'object' && project.createdBy?.username) {
       return project.createdBy.username === user.username;
     } else if (typeof project.createdBy === 'string') {
-      return project.createdBy === user.username;
+      return project.createdBy === user.id;
     }
     
     return false;

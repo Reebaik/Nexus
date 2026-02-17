@@ -1,36 +1,64 @@
-src/styles/global.css
+:root {
+  --primary-blue: #0072ff;
+  --accent-pink: #ff0080;
+  --background-dark: #0b0e14;
+  --text-primary: #f1f2f4;
+  --text-secondary: #a8acb3;
+  --glass-bg: rgba(18, 18, 18, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --sidebar-width: 280px;
+  --navbar-height: 70px;
+}
+
 body {
-  font-family: sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   margin: 0;
-  padding: 20px;
-  background-color: #f4f4f4;
+  padding: 0;
+  background-color: var(--background-dark);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-nav {
-  background-color: #333;
-  padding: 10px;
-  margin-bottom: 20px;
-}
-
-nav a {
-  color: white;
-  margin: 0 10px;
+a {
+  color: var(--primary-blue);
   text-decoration: none;
+  transition: color 0.2s ease;
 }
 
-nav a:hover {
-  text-decoration: underline;
+a:hover {
+  color: #3b82f6; /* Lighter blue */
 }
 
-hr {
-  border: 0;
-  height: 1px;
-  background: #ccc;
-  margin-bottom: 20px;
+/* Global scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Reset specific elements */
 button {
-  padding: 8px 15px;
-  margin: 5px;
-  cursor: pointer;
+  font-family: inherit;
+}
+
+/* Utility classes */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
 }

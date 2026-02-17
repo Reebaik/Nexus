@@ -51,11 +51,17 @@
 .loginContainer {
   position: relative;
   z-index: 2;
-  width: 420px;
-  padding: 42px 34px;
-  border-radius: 20px;
-  background: linear-gradient(180deg, #121212, #0c0c0c);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  width: 440px;
+  padding: 48px 40px;
+  border-radius: 24px;
+  /* Glassmorphism */
+  background: rgba(18, 18, 18, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8),
+              0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  
   color: var(--text-light);
   display: flex;
   flex-direction: column;
@@ -66,43 +72,64 @@
    Title
    =============================== */
 .title {
-  font-size: 2.1rem;
-  font-weight: 600;
-  margin-bottom: 26px;
+  font-size: 2.4rem;
+  font-weight: 700;
+  margin-bottom: 32px;
+  letter-spacing: -0.02em;
+  text-align: center;
 
-  background: linear-gradient(90deg,
-      var(--primary-blue),
-      var(--accent-pink),
-      var(--primary-blue));
-  background-size: 300% 300%;
-
+  background: linear-gradient(135deg,
+      #fff 0%,
+      var(--primary-blue) 50%,
+      var(--accent-pink) 100%);
+  background-size: 200% auto;
+  
   -webkit-background-clip: text;
   background-clip: text;
+  -webkit-text-fill-color: transparent;
 
-  animation: gradientFlow 6s ease-in-out infinite;
+  animation: gradientFlow 5s ease infinite alternate;
 }
 
 @keyframes gradientFlow {
-  0% {
-    background-position: 0% 50%;
-  }
-
-  50% {
-    background-position: 100% 50%;
-  }
-
-  100% {
-    background-position: 0% 50%;
-  }
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
 }
-
 
 /* ===============================
    Inputs
    =============================== */
 .inputField {
   width: 100%;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
+}
+
+/* Custom styling for MUI TextField to blend in */
+.inputField :global(.MuiOutlinedInput-root) {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.inputField :global(.MuiOutlinedInput-root:hover) {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.inputField :global(.MuiOutlinedInput-root.Mui-focused) {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 2px rgba(0, 114, 255, 0.3);
+}
+
+.inputField :global(.MuiOutlinedInput-notchedOutline) {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.inputField :global(.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline) {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.inputField :global(.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline) {
+  border-color: var(--primary-blue);
 }
 
 /* ===============================
@@ -110,21 +137,33 @@
    =============================== */
 .loginButton {
   width: 100%;
-  margin-top: 10px;
-  padding: 12px;
-  border-radius: 8px;
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 12px;
   border: none;
+  font-size: 1rem;
   font-weight: 600;
+  letter-spacing: 0.02em;
   color: #fff;
   cursor: pointer;
+  
   background: linear-gradient(90deg,
       var(--primary-blue),
       var(--accent-pink));
-  transition: box-shadow 0.3s ease;
+  background-size: 200% auto;
+  
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 114, 255, 0.3);
 }
 
 .loginButton:hover {
-  box-shadow: 0 0 18px rgba(0, 114, 255, 0.45);
+  background-position: right center;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 114, 255, 0.5);
+}
+
+.loginButton:active {
+  transform: translateY(0);
 }
 
 /* ===============================
