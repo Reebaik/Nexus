@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { TextField } from '@mui/material';
 import { DatePicker, ConfigProvider, theme } from 'antd';
 import dayjs from 'dayjs';
 import styles from '../styles/ProjectOverviewPage.module.css';
@@ -477,7 +476,7 @@ const ProjectExecutionPage: React.FC = () => {
           taskMembers: members,
           startDate: taskToUpdate.startDate || taskModalState.editingTask?.startDate || '',
           endDate: taskToUpdate.endDate || taskModalState.editingTask?.endDate || '',
-          linkedRequirement: taskToUpdate.linkedRequirement || taskModalState.editingTask?.linkedRequirement || '',
+          linkedRequirement: taskToUpdate.linkedRequirement || taskModalState.editingTask?.linkedRequirement || undefined,
           assignee: undefined,
           tags: undefined,
           createdAt: undefined,
