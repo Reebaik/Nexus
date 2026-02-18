@@ -28,6 +28,8 @@ app.use('/api/auth', googleAuthRoutes);
 app.use('/api/projects', projectsRoutes);
 import githubRoutes from './routes/github.js';
 app.use('/api/github', githubRoutes);
+import aiRoutes from './routes/ai.js';
+app.use('/api/ai', aiRoutes);
 
 app.get('/', (req, res) => {
   res.send('Nexus Backend API Running');

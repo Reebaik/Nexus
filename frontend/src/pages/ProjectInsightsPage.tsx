@@ -38,16 +38,44 @@ interface Task {
 }
 
 const ProjectInsightsPage: React.FC = () => {
-  const { project } = useOutletContext<ProjectOutletContext>();
+  const { project, setProject } = useOutletContext<ProjectOutletContext>();
   const navigate = useNavigate();
   const tasks = (project.tasks ?? []) as Task[];
   
   const [loading, setLoading] = React.useState(true);
+  const [generatingBrief, setGeneratingBrief] = React.useState(false);
   const [repo, setRepo] = React.useState<{ repoOwner?: string; repoName?: string } | null>(
     project.github && project.github.repoName ? project.github : null
   );
   const [activity, setActivity] = React.useState<GitHubActivityItem[]>([]);
   const [syncing, setSyncing] = React.useState(false);
+
+  const generateBrief = async () => {
+    try {
+      setGeneratingBrief(true);
+      const token = localStorage.getItem('nexus_jwt') || '';
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/ai/executive-brief/${project._id}`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        // Update project context with new brief
+        setProject((prev) => (prev ? { ...prev, aiBrief: data, aiGeneratedAt: new Date() } : null));
+      } else {
+        console.error('Failed to generate brief');
+      }
+    } catch (err) {
+      console.error('Error generating brief:', err);
+    } finally {
+      setGeneratingBrief(false);
+    }
+  };
 
   const fetchActivity = React.useCallback(async () => {
     try {
@@ -173,6 +201,72 @@ const ProjectInsightsPage: React.FC = () => {
           <p className={styles.lead}>
             Deep dive into project health, team workload, and development activity.
           </p>
+        </div>
+
+        {/* Executive Project Brief */}
+        <div className={chartStyles.chartBlock}>
+          <div className={chartStyles.chartHeader}>
+            <h2 className={chartStyles.chartTitle}>Executive Project Brief</h2>
+            <button 
+              className={chartStyles.generateButton}
+              onClick={generateBrief} 
+              disabled={generatingBrief}
+              style={{ fontSize: '0.9rem', padding: '8px 16px' }}
+            >
+              {generatingBrief ? 'Generating...' : (project.aiBrief ? 'Regenerate Brief' : 'Generate AI Brief')}
+            </button>
+          </div>
+          
+          {project.aiBrief ? (
+            <div className={chartStyles.briefContainer}>
+              <div>
+                <span className={`${chartStyles.briefHealthBadge} ${
+                  project.aiBrief.overallHealth === 'Good' ? chartStyles.healthGood :
+                  project.aiBrief.overallHealth === 'At Risk' ? chartStyles.healthAtRisk :
+                  chartStyles.healthCritical
+                }`}>
+                  Health: {project.aiBrief.overallHealth}
+                </span>
+                <div className={chartStyles.briefSummary}>
+                  {project.aiBrief.summary}
+                </div>
+              </div>
+
+              <div className={chartStyles.briefGrid}>
+                <div className={chartStyles.briefSection}>
+                  <h3>Milestone Analysis</h3>
+                  <p>{project.aiBrief.milestoneAnalysis}</p>
+                </div>
+                <div className={chartStyles.briefSection}>
+                  <h3>Velocity Analysis</h3>
+                  <p>{project.aiBrief.velocityAnalysis}</p>
+                </div>
+              </div>
+
+              <div className={chartStyles.briefGrid}>
+                <div className={chartStyles.briefSection}>
+                  <h3>Key Risks</h3>
+                  <ul className={chartStyles.briefList}>
+                    {project.aiBrief.keyRisks?.map((risk, i) => (
+                      <li key={i}>{risk}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div className={chartStyles.briefSection}>
+                  <h3>Recommendations</h3>
+                  <ul className={chartStyles.briefList}>
+                    {project.aiBrief.recommendations?.map((rec, i) => (
+                      <li key={i}>{rec}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          ) : (
+             <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
+                <p>Generate an AI-powered executive summary of your project's health, risks, and velocity.</p>
+             </div>
+          )}
         </div>
 
         {/* 1) Schedule Health Indicators */}

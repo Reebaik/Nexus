@@ -87,6 +87,15 @@ const projectSchema = new mongoose.Schema({
     status: { type: String, enum: ['upcoming', 'completed', 'overdue'], default: 'upcoming' },
     dependencies: [{ type: String }] // task IDs
   }],
+  aiBrief: {
+    overallHealth: { type: String },
+    summary: { type: String },
+    milestoneAnalysis: { type: String },
+    velocityAnalysis: { type: String },
+    keyRisks: [{ type: String }],
+    recommendations: [{ type: String }]
+  },
+  aiGeneratedAt: { type: Date },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
 }, { timestamps: true });
 

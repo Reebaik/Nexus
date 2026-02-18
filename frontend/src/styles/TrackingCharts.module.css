@@ -391,3 +391,121 @@
     transform: translateX(100%);
   }
 }
+
+/* Executive Brief Styles */
+.briefContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.briefSummary {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #e2e8f0;
+  border-left: 4px solid #3b82f6;
+  padding-left: 16px;
+  background: rgba(59, 130, 246, 0.1);
+  padding: 16px;
+  border-radius: 0 8px 8px 0;
+}
+
+.briefHealthBadge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.healthGood {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.healthAtRisk {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.healthCritical {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.briefGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.briefSection h3 {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 8px;
+}
+
+.briefSection p {
+  color: #cbd5e1;
+  line-height: 1.5;
+}
+
+.briefList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.briefList li {
+  position: relative;
+  padding-left: 24px;
+  margin-bottom: 8px;
+  color: #cbd5e1;
+}
+
+.briefList li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: #3b82f6;
+  font-weight: bold;
+}
+
+.generateButton {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+}
+
+.generateButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 8px -1px rgba(59, 130, 246, 0.4);
+}
+
+.generateButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  background: #475569;
+}
+
+@media (max-width: 768px) {
+  .briefGrid {
+    grid-template-columns: 1fr;
+  }
+}

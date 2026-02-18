@@ -20,6 +20,15 @@ export interface Project {
   nonFunctionalRequirements?: any[];
   tasks?: any[];
   milestones?: any[];
+  aiBrief?: {
+    overallHealth: string;
+    summary: string;
+    milestoneAnalysis: string;
+    velocityAnalysis: string;
+    keyRisks: string[];
+    recommendations: string[];
+  };
+  aiGeneratedAt?: string | Date;
 }
 
 export type ProjectOutletContext = {
