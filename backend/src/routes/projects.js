@@ -404,6 +404,10 @@ router.post('/:id/requirements', authMiddleware, async (req, res) => {
     project.functionalRequirements.push(newRequirement);
     await project.save();
 
+    const user = await User.findById(req.user.userId);
+    const creator = user ? user.username : 'Unknown';
+    eventBus.emit('requirement.created', { project, requirement: newRequirement, creator });
+
     res.status(201).json({ message: 'Functional requirement added', requirement: newRequirement });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
@@ -430,6 +434,11 @@ router.put('/:id/requirements/:reqId', authMiddleware, async (req, res) => {
     console.log('Updated requirement:', requirement);
     await project.save();
     console.log('Project saved successfully');
+
+    const user = await User.findById(req.user.userId);
+    const updater = user ? user.username : 'Unknown';
+    eventBus.emit('requirement.updated', { project, requirement, updater });
+
     res.json({ message: 'Functional requirement updated', requirement });
   } catch (err) {
     console.error('Error updating functional requirement:', err);
@@ -452,6 +461,11 @@ router.delete('/:id/requirements/:reqId', authMiddleware, async (req, res) => {
     
     await project.save();
     console.log('Project saved successfully');
+
+    const user = await User.findById(req.user.userId);
+    const deleter = user ? user.username : 'Unknown';
+    eventBus.emit('requirement.deleted', { project, requirementId: req.params.reqId, deleter });
+
     res.json({ message: 'Functional requirement deleted' });
   } catch (err) {
     console.error('Error deleting functional requirement:', err);
@@ -482,6 +496,10 @@ router.post('/:id/non-functional-requirements', authMiddleware, async (req, res)
     project.nonFunctionalRequirements.push(newRequirement);
     await project.save();
 
+    const user = await User.findById(req.user.userId);
+    const creator = user ? user.username : 'Unknown';
+    eventBus.emit('nfr.created', { project, requirement: newRequirement, creator });
+
     res.status(201).json({ message: 'Non-functional requirement added', requirement: newRequirement });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
@@ -509,6 +527,11 @@ router.put('/:id/non-functional-requirements/:reqId', authMiddleware, async (req
     console.log('Updated NFR:', requirement);
     await project.save();
     console.log('Project saved successfully');
+
+    const user = await User.findById(req.user.userId);
+    const updater = user ? user.username : 'Unknown';
+    eventBus.emit('nfr.updated', { project, requirement, updater });
+
     res.json({ message: 'Non-functional requirement updated', requirement });
   } catch (err) {
     console.error('Error updating non-functional requirement:', err);
@@ -531,6 +554,11 @@ router.delete('/:id/non-functional-requirements/:reqId', authMiddleware, async (
     
     await project.save();
     console.log('Project saved successfully');
+
+    const user = await User.findById(req.user.userId);
+    const deleter = user ? user.username : 'Unknown';
+    eventBus.emit('nfr.deleted', { project, requirementId: req.params.reqId, deleter });
+
     res.json({ message: 'Non-functional requirement deleted' });
   } catch (err) {
     console.error('Error deleting non-functional requirement:', err);
@@ -910,6 +938,8 @@ router.delete('/:id/tasks/:taskId', authMiddleware, async (req, res) => {
     project.tasks = project.tasks.filter(task => task.id !== req.params.taskId);
     await project.save();
 
+    eventBus.emit('task.deleted', { project, taskId: req.params.taskId, deleter: username });
+
     res.json({ message: 'Task deleted' });
   } catch (err) {
     console.error('Error deleting task:', err);
@@ -1010,6 +1040,10 @@ router.delete('/:id/milestones/:milestoneId', authMiddleware, async (req, res) =
 
     project.milestones.splice(milestoneIndex, 1);
     await project.save();
+
+    const user = await User.findById(req.user.userId);
+    const deleter = user ? user.username : 'Unknown';
+    eventBus.emit('milestone.deleted', { project, milestoneId: req.params.milestoneId, deleter });
 
     res.json({ message: 'Milestone deleted' });
   } catch (err) {

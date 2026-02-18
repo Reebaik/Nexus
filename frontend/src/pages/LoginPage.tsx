@@ -184,6 +184,12 @@ const LoginPage: React.FC = () => {
               />
             </motion.div>
 
+            <motion.div style={{ textAlign: "right", marginTop: 8, marginBottom: 8 }} variants={itemVariants}>
+              <Link to="/forgot-password" style={{ color: "#60a5fa", textDecoration: "none", fontSize: "0.9rem" }}>
+                Forgot Password?
+              </Link>
+            </motion.div>
+
             {error && (
               <motion.div className={styles.error} variants={itemVariants}>
                 {error}

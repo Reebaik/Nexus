@@ -21,7 +21,6 @@ const IntegrationsGithubConnected: React.FC = () => {
   const [repos, setRepos] = React.useState<Array<{ owner: string; name: string }>>([]);
   const [selectedRepoKey, setSelectedRepoKey] = React.useState<string>('');
   const [accountLogin, setAccountLogin] = React.useState<string>('');
-  const [debugInfo, setDebugInfo] = React.useState<Record<string, unknown> | null>(null);
   const [status, setStatus] = React.useState<string>('');
   const [autoProjectId, setAutoProjectId] = React.useState<string>('');
 
@@ -91,7 +90,7 @@ const IntegrationsGithubConnected: React.FC = () => {
 
   const checkStatus = async (token: string) => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/github/status?debug=1`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/github/status`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) return;
@@ -101,7 +100,6 @@ const IntegrationsGithubConnected: React.FC = () => {
         setInstalled(true);
         setInstallationId(data.installationId);
         setRepos(data.repositories || []);
-        setDebugInfo(data.debug);
         // Try to guess account login from first repo if not explicitly sent
         if (data.repositories?.length > 0) {
           setAccountLogin(data.repositories[0].owner);
@@ -317,15 +315,6 @@ const IntegrationsGithubConnected: React.FC = () => {
               <div className={`${styles.statusMessage} ${status.includes('success') ? styles.statusSuccess : styles.statusError}`}>
                 {status}
               </div>
-            )}
-
-            {debugInfo && (
-              <details className={styles.debugDetails}>
-                <summary className={styles.debugSummary}>Debug Info</summary>
-                <pre className={styles.debugPre}>
-                  {JSON.stringify(debugInfo, null, 2)}
-                </pre>
-              </details>
             )}
           </div>
         </div>
